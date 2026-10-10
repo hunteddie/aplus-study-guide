@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- These lines are what make the page installable as an app on a phone's home screen. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A+ Study">
+<meta name="theme-color" content="#F2F4F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1720" media="(prefers-color-scheme: dark)">
+
+<title>A+ Study Guide</title>
+
+<style>
+  /* Layout: one centered column. Home leads with today's session, then the two exams and their domains; a quiz, flashcard deck or info page replaces it. */
+  :root {
+    --bg: #F2F4F8; --surface: #FFFFFF; --ink: #142033; --muted: #5A6880; --line: #D3DAE5;
+    --accent: #1F5FD1; --on-accent: #FFFFFF; --accent-soft: #E3ECFB;
+    --good: #18794E; --good-soft: #DDF3E6; --bad: #B93131; --bad-soft: #FBE3E3; --track: #E3E8F0; --mid: #9DBDF0;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0F1720; --surface: #18232F; --ink: #E6EDF3; --muted: #8B9BAB; --line: #2A3947;
+    --accent: #5AA2FF; --on-accent: #0B1420; --accent-soft: #1B2F49;
+    --good: #3ECF8E; --good-soft: #143326; --bad: #FF7B7B; --bad-soft: #3A1C1F; --track: #243240; --mid: #2F5E99;
+    color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #18232F; --ink: #E6EDF3; --muted: #8B9BAB; --line: #2A3947;
+    --accent: #5AA2FF; --on-accent: #0B1420; --accent-soft: #1B2F49;
+    --good: #3ECF8E; --good-soft: #143326; --bad: #FF7B7B; --bad-soft: #3A1C1F; --track: #243240; --mid: #2F5E99;
+    color-scheme: dark }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); padding-inline: 16px; }
+  #app { max-width: 720px; margin: 0 auto; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 24px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 28px; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-size: 18px; }
+  .sub { color: var(--muted); }
+  .label { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .spread { justify-content: space-between; }
+
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn.small { padding: 6px 12px; font-size: 14px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .link { align-self: flex-start; background: none; border: none; padding: 0; color: var(--accent); text-decoration: underline; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+
+  /* Summary strip on the home screen */
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .summary div { min-width: 0; }
+  .summary b { display: block; font-family: var(--mono); font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+
+  /* Exam block and its domain rows */
+  .exam-head { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+  .domain { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; align-items: center; padding-block: 14px; border-top: 1px solid var(--line); }
+  .domain .meta { font-size: 14px; color: var(--muted); }
+  .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+  .bar { display: flex; }
+  .bar i { display: block; height: 100%; background: var(--good); }
+  .bar i.going { background: var(--mid); }
+
+  /* Quiz */
+  .question { font-size: 21px; line-height: 1.35; text-wrap: balance; }
+  .choice { display: flex; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+  .choice:hover:not(:disabled) { border-color: var(--accent); }
+  .choice .key { font-family: var(--mono); color: var(--muted); }
+  .choice:disabled { cursor: default; }
+  .choice.right { border-color: var(--good); background: var(--good-soft); }
+  .choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .verdict { font-weight: 600; }
+  .verdict.right { color: var(--good); }
+  .verdict.wrong { color: var(--bad); }
+
+  .missed { padding-block: 12px; border-top: 1px solid var(--line); }
+  .missed .ans { color: var(--good); font-weight: 600; }
+
+  /* Flashcards */
+  .card { min-height: 200px; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; text-align: center; width: 100%; padding: 28px 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+  .card .face { font-size: 26px; line-height: 1.25; font-weight: 600; overflow-wrap: anywhere; }
+  .card.back .face { font-size: 19px; font-weight: 400; }
+  .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
+  .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+  .note { font-size: 13px; color: var(--muted); }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .strong { font-weight: 600; }
+  .wrap { overflow-wrap: anywhere; }
+  .field { display: flex; flex-direction: column; gap: 4px; max-width: 360px; font-size: 14px; color: var(--muted); }
+  .field input { font: inherit; font-size: 16px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; }
+  .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .more { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .more .row { gap: 6px 20px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .check input { margin-top: 5px; accent-color: var(--accent); }
+  .tag { align-self: flex-start; font-size: 14px; padding: 4px 10px; border-radius: 6px; background: var(--bad-soft); color: var(--bad); }
+
+  @media (max-width: 480px) {
+    .summary b { font-size: 21px; }
+    .question { font-size: 19px; }
+  }
+</style>
+<style>
+  /* Keep content clear of the notch and the home bar when running as an installed app. */
+  body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- The Supabase library (sign-in and database), then your project's settings. -->
+<script src="lib/supabase.js"></script>
+<script src="config.js"></script>
+
+<script>
+/* =====================================================================
+   A+ STUDY GUIDE
+   The file has four parts, in this order:
+     1. EXAM FACTS     the two exams and their domains
+     2. QUESTION BANK  every practice question   <- add your own here
+     3. FLASHCARDS     ports, acronyms, commands <- and here
+     4. STUDY LINKS    the resources page
+     5. THE APP        the review schedule and the code that runs the screens
+   ===================================================================== */
+
+/* ---------- 1. EXAM FACTS (from CompTIA's exam pages, A+ V15) ---------- */
+const EXAMS = [
+  { core: 1, name: "Core 1", code: "220-1201", pass: 675 },
+  { core: 2, name: "Core 2", code: "220-1202", pass: 700 }
+];
+const DOMAINS = [
+  { id: "mob",  core: 1, name: "Mobile Devices",                       weight: 13 },
+  { id: "net",  core: 1, name: "Networking",                           weight: 23 },
+  { id: "hw",   core: 1, name: "Hardware",                             weight: 25 },
+  { id: "virt", core: 1, name: "Virtualization and Cloud Computing",   weight: 11 },
+  { id: "hts",  core: 1, name: "Hardware and Network Troubleshooting", weight: 28 },
+  { id: "os",   core: 2, name: "Operating Systems",                    weight: 28 },
+  { id: "sec",  core: 2, name: "Security",                             weight: 28 },
+  { id: "sts",  core: 2, name: "Software Troubleshooting",             weight: 23 },
+  { id: "ops",  core: 2, name: "Operational Procedures",               weight: 21 }
+];
+
+/* ---------- 2. QUESTION BANK ----------
+   Each line is: add(domain, question, [four choices], position of the correct choice, explanation, topic)
+   Positions start at 0, so 0 is the first choice. The topic is what the "Learn more" links search for.
+   Add new questions at the very END of the bank, so saved progress stays matched to the right question. */
+const QUESTIONS = [];
+function add(domain, text, choices, correct, explanation, topic) {
+  const n = QUESTIONS.filter(q => q.domain === domain).length + 1;
+  QUESTIONS.push({ id: domain + "-" + n, domain, text, choices, correct, explanation, topic });
+}
+
+// Mobile Devices
+add("mob", "Which type of memory module is used in most laptops?", ["DIMM", "SO-DIMM", "SATA", "M.2"], 1, "Laptops use SO-DIMM, a shorter version of the DIMM used in desktops. SATA and M.2 are storage connections, not memory.", "SO-DIMM");
+add("mob", "Which wireless technology lets you pay by tapping a phone on a card reader?", ["NFC", "Bluetooth", "Infrared", "Wi-Fi"], 0, "NFC (near-field communication) works over a few centimeters, which is why you have to tap. Bluetooth and Wi-Fi have much longer range.", "Near-field communication");
+add("mob", "Which display type has no backlight because each pixel produces its own light?", ["LCD with LED backlight", "OLED", "TN", "IPS"], 1, "OLED pixels emit their own light, giving true blacks and thinner panels. TN and IPS are both LCD types, and every LCD needs a backlight.", "OLED");
+add("mob", "In an older laptop with a CCFL backlight, which part converts DC power to the AC the backlight needs?", ["Digitizer", "Inverter", "Webcam", "Wi-Fi antenna"], 1, "The inverter powers a CCFL backlight. A dim screen whose image is still faintly visible often points to a failed inverter or backlight.", "LCD backlight inverter");
+add("mob", "Which connector can carry charging, data and video over one reversible cable?", ["Micro-USB", "USB-C", "Lightning", "Mini-USB"], 1, "USB-C is reversible and can carry power, data and video. Lightning is also reversible but is Apple-only and does not offer the same range of uses.", "USB-C");
+add("mob", "A company wants to enforce passcodes and remotely wipe lost phones. Which tool does this?", ["MDM", "VPN", "NFC", "IMEI"], 0, "Mobile device management (MDM) pushes policies and can remotely lock or wipe devices. The IMEI is just a phone's hardware ID number.", "Mobile device management");
+add("mob", "Sharing a phone's cellular data connection with a laptop is called what?", ["Tethering", "Pairing", "Syncing", "Docking"], 0, "Tethering, or a mobile hotspot, shares the phone's cellular connection. Pairing is the Bluetooth setup step and syncing copies data between devices.", "Tethering");
+add("mob", "Which part of a touchscreen detects your touch and turns it into input?", ["Inverter", "Digitizer", "Backlight", "Polarizer"], 1, "The digitizer is the touch-sensing layer. If the picture is fine but touch does not respond, the digitizer is the likely fault.", "Touchscreen digitizer");
+add("mob", "Where are a laptop's Wi-Fi antennas usually located?", ["Under the keyboard", "Next to the battery", "Around the display in the lid", "Inside the power adapter"], 2, "The antenna wires run up into the lid around the screen for better reception. That is why they can be damaged or left disconnected after a screen replacement.", "Laptop wireless antenna");
+add("mob", "Which wireless technology is used to connect earbuds to a phone?", ["NFC", "Cellular", "Bluetooth", "GPS"], 2, "Bluetooth is the short-range standard for headsets, keyboards and other accessories. The devices are paired before first use.", "Bluetooth");
+add("mob", "A laptop battery is visibly swollen. What should you do?", ["Keep using it until it stops charging", "Puncture it to release the pressure", "Stop using it and replace it, then recycle it properly", "Put it in the freezer"], 2, "A swollen lithium-ion battery is a fire risk. Power down, replace it and take it to a battery recycling point. Never puncture it.", "Lithium-ion battery safety");
+
+// Networking
+add("net", "Which port does Remote Desktop Protocol (RDP) use?", ["80", "443", "22", "3389"], 3, "3389 is Remote Desktop (RDP). HTTPS uses port 443. Port 80 is HTTP, 22 is SSH.", "Remote Desktop Protocol");
+add("net", "Which port does HTTPS use by default?", ["80", "443", "22", "3389"], 1, "HTTPS uses port 443. Port 80 is plain HTTP.", "HTTPS");
+add("net", "Which service automatically assigns IP addresses to devices on a network?", ["DNS", "DHCP", "FTP", "SMTP"], 1, "DHCP hands out IP addresses. DNS turns names into IP addresses, FTP transfers files, and SMTP sends email.", "DHCP");
+add("net", "Which port does DNS use?", ["25", "53", "110", "143"], 1, "DNS uses port 53. Port 25 is SMTP, 110 is POP3 and 143 is IMAP, which are all email protocols.", "Domain Name System");
+add("net", "Which protocol gives you an encrypted command line on a remote device over port 22?", ["Telnet", "SSH", "FTP", "SNMP"], 1, "SSH is encrypted and uses port 22. Telnet does the same job on port 23 but sends everything, including passwords, in plain text.", "Secure Shell");
+add("net", "Which of these is a private IPv4 address?", ["8.8.8.8", "172.32.0.5", "192.168.1.10", "11.0.0.1"], 2, "The private ranges are 10.x.x.x, 172.16.x.x to 172.31.x.x, and 192.168.x.x. 172.32.0.5 falls just outside the middle range.", "Private network addresses");
+add("net", "A PC shows the address 169.254.12.7. What does that tell you?", ["It has a static address", "It could not reach a DHCP server", "It is connected to a VPN", "DNS is misconfigured"], 1, "Addresses starting 169.254 are APIPA addresses, which Windows assigns itself when no DHCP server answers.", "APIPA link-local address");
+add("net", "Which Wi-Fi standard is also known as Wi-Fi 6?", ["802.11n", "802.11ac", "802.11ax", "802.11g"], 2, "802.11ax is Wi-Fi 6. 802.11ac is Wi-Fi 5 and 802.11n is Wi-Fi 4.", "Wi-Fi 6");
+add("net", "Which device connects different networks and forwards traffic based on IP addresses?", ["Switch", "Router", "Hub", "Patch panel"], 1, "A router moves traffic between networks using IP addresses. A switch connects devices inside one network using MAC addresses.", "Router");
+add("net", "Which 2.4 GHz Wi-Fi channels do not overlap with each other?", ["1, 2 and 3", "1, 6 and 11", "2, 4 and 8", "5, 10 and 15"], 1, "Channels 1, 6 and 11 are far enough apart not to interfere with each other, so they are the standard choices on 2.4 GHz.", "Wi-Fi channels");
+add("net", "Which connector is used on twisted-pair Ethernet cables?", ["RJ11", "RJ45", "LC", "F-type"], 1, "RJ45 has eight pins and is used for Ethernet. RJ11 is the smaller phone connector, LC is for fiber and F-type is for coaxial cable.", "RJ45 connector");
+add("net", "Which type of server sits between users and the internet to filter and cache web requests?", ["Proxy server", "DHCP server", "Print server", "Syslog server"], 0, "A proxy server makes web requests on behalf of users, which lets it filter content and cache pages. A syslog server collects logs.", "Proxy server");
+
+// Hardware
+add("hw", "Which RAID level mirrors data across two drives?", ["RAID 0", "RAID 1", "RAID 5", "RAID 10"], 1, "RAID 1 keeps an identical copy on a second drive. RAID 0 stripes for speed and has no redundancy at all.", "RAID levels");
+add("hw", "What is the minimum number of drives for RAID 5?", ["2", "3", "4", "5"], 1, "RAID 5 needs at least three drives and can survive the loss of one, because parity data is spread across all of them.", "RAID levels");
+add("hw", "Which connector supplies main power to a modern motherboard?", ["4-pin Molex", "24-pin ATX", "SATA power", "6-pin PCIe"], 1, "The 24-pin ATX connector is the main motherboard power. The CPU gets its own separate 4-pin or 8-pin connector.", "ATX power connectors");
+add("hw", "Which storage option is fastest?", ["5400 rpm hard drive", "SATA SSD", "NVMe SSD", "7200 rpm hard drive"], 2, "NVMe drives use the PCIe bus and are several times faster than SATA SSDs, which are limited by the older SATA interface.", "NVMe");
+add("hw", "What is thermal paste for?", ["Holding the CPU in its socket", "Improving heat transfer between the CPU and its heatsink", "Insulating the CPU from static", "Cooling the power supply"], 1, "Thermal paste fills the tiny gaps between the CPU and heatsink so heat moves across efficiently. Too little or dried-out paste causes overheating.", "Thermal paste");
+add("hw", "Which slot does a modern graphics card use?", ["PCIe x16", "PCIe x1", "SATA", "DIMM"], 0, "Graphics cards use the long PCIe x16 slot. The short x1 slots are for smaller cards such as network or sound cards.", "PCI Express");
+add("hw", "Which printer type uses toner and a fuser?", ["Inkjet", "Laser", "Thermal", "Impact"], 1, "Laser printers put toner powder on the page and melt it in place with the fuser. Impact (dot matrix) printers strike a ribbon and are used for multi-part forms.", "Laser printing");
+add("hw", "In laser printing, which step melts the toner onto the paper?", ["Charging", "Exposing", "Transferring", "Fusing"], 3, "The order is processing, charging, exposing, developing, transferring, fusing and cleaning. Fusing uses heat and pressure to bond the toner.", "Laser printing process");
+add("hw", "Which cable type is immune to electromagnetic interference?", ["Unshielded twisted pair", "Coaxial", "Fiber optic", "Shielded twisted pair"], 2, "Fiber carries light instead of electricity, so electrical interference does not affect it. Shielded twisted pair only reduces interference.", "Fiber-optic cable");
+add("hw", "Which firmware feature only lets a PC start operating systems with a trusted digital signature?", ["Secure Boot", "Fast Boot", "Wake-on-LAN", "Virtualization support"], 0, "Secure Boot is a UEFI feature that blocks unsigned boot software, which stops malware that tries to load before the operating system.", "UEFI Secure Boot");
+add("hw", "Which chip on the motherboard stores the encryption keys used by BitLocker?", ["CMOS", "TPM", "GPU", "NIC"], 1, "The Trusted Platform Module (TPM) securely stores encryption keys. Windows 11 requires TPM 2.0.", "Trusted Platform Module");
+add("hw", "Which form factor is a small storage card that lies flat on the motherboard and is held by one screw?", ["2.5-inch", "3.5-inch", "M.2", "mSATA cable"], 2, "M.2 drives are small cards that plug straight into the board. An M.2 drive can be either SATA or NVMe, so check which the slot supports.", "M.2");
+
+// Virtualization and Cloud Computing
+add("virt", "Where does a Type 1 hypervisor run?", ["Inside a web browser", "On top of a desktop operating system", "Directly on the hardware", "Inside a virtual machine"], 2, "A Type 1, or bare-metal, hypervisor is installed directly on the hardware. Examples are VMware ESXi and Microsoft Hyper-V.", "Hypervisor");
+add("virt", "Which of these is a Type 2 hypervisor?", ["VMware ESXi", "Oracle VirtualBox", "Microsoft Hyper-V Server", "Citrix Hypervisor"], 1, "A Type 2 hypervisor is an app that runs on top of a normal operating system, like VirtualBox or VMware Workstation.", "Hypervisor");
+add("virt", "Web-based email that you use through a browser is an example of which cloud model?", ["IaaS", "PaaS", "SaaS", "On-premises"], 2, "Software as a service (SaaS) delivers a finished application. You manage nothing underneath it.", "Software as a service");
+add("virt", "Renting virtual machines, storage and networking from a provider is which cloud model?", ["IaaS", "PaaS", "SaaS", "DaaS"], 0, "Infrastructure as a service (IaaS) gives you the raw building blocks. You still install and manage the operating system and software.", "Infrastructure as a service");
+add("virt", "A cloud environment built for and used by a single organization is called what?", ["Public cloud", "Private cloud", "Community cloud", "Hybrid cloud"], 1, "A private cloud serves one organization. A public cloud shares the provider's infrastructure among many customers.", "Cloud deployment models");
+add("virt", "Which term describes a cloud service automatically adding and removing resources as demand changes?", ["Rapid elasticity", "High availability", "Metered utilization", "Shared resources"], 0, "Rapid elasticity means capacity grows and shrinks with demand. High availability is about staying online when something fails.", "Cloud elasticity");
+add("virt", "A company keeps sensitive data on its own servers and uses a public cloud for everything else. What is this?", ["Private cloud", "Community cloud", "Hybrid cloud", "Public cloud"], 2, "A hybrid cloud combines private and public cloud resources.", "Hybrid cloud");
+add("virt", "Virtual machines will not start on a new PC. Which setting should you check in the firmware?", ["Secure Boot", "Hardware virtualization support (Intel VT-x or AMD-V)", "Fan speed profile", "Boot order"], 1, "The CPU's virtualization extensions must be switched on in the UEFI/BIOS before a hypervisor can run 64-bit virtual machines.", "Hardware virtualization VT-x");
+add("virt", "What is virtual desktop infrastructure (VDI)?", ["A second monitor attached to a PC", "Desktops that run on a server and are delivered to users over the network", "A way to partition a hard drive", "A type of laptop dock"], 1, "With VDI the desktop runs in the data center or cloud, and the user's device just displays it. Data stays off the local device.", "Desktop virtualization");
+add("virt", "Paying only for the cloud resources you actually use is called what?", ["Metered utilization", "Rapid elasticity", "Multitenancy", "File synchronization"], 0, "Metered utilization means usage is measured and billed, like a utility. Multitenancy means many customers share the same infrastructure.", "Cloud computing");
+add("virt", "What is an isolated virtual environment for safely testing suspicious software called?", ["Sandbox", "Hotspot", "Honeypot", "Snapshot"], 0, "A sandbox keeps whatever runs inside it away from the real system. A snapshot is a saved state of a virtual machine that you can return to.", "Sandbox security");
+
+// Hardware and Network Troubleshooting
+add("hts", "What is the first step in CompTIA's troubleshooting methodology?", ["Establish a theory of probable cause", "Identify the problem", "Test the theory", "Document the findings"], 1, "The six steps are: identify the problem, establish a theory, test the theory, plan and implement the fix, verify full functionality, and document.", "Troubleshooting methodology");
+add("hts", "What is the last step in CompTIA's troubleshooting methodology?", ["Verify full system functionality", "Implement the solution", "Document the findings, actions and outcomes", "Establish a plan of action"], 2, "Documentation always comes last, after you have verified the fix and put any preventive measures in place.", "Troubleshooting methodology");
+add("hts", "A PC's date and time reset every time it is unplugged. What is the likely cause?", ["Failing power supply", "Dead CMOS battery", "Corrupt operating system", "Bad RAM"], 1, "The coin-cell CMOS battery (usually a CR2032) keeps the clock and firmware settings while the PC has no power.", "CMOS battery");
+add("hts", "A PC gives a series of beeps at power-on and shows no video. What does this most likely indicate?", ["A hardware failure found during POST, often memory", "A corrupt user profile", "A full hard drive", "A missing printer driver"], 0, "Beep codes come from the power-on self-test, before any operating system loads. Reseating the RAM is a common first check.", "Power-on self-test");
+add("hts", "A hard drive is making a loud clicking noise. What should you do first?", ["Defragment the drive", "Back up the data immediately", "Update the drive's firmware", "Run a full format"], 1, "Clicking means the drive is physically failing. Get the data off first, then replace the drive.", "Hard disk drive failure");
+add("hts", "Toner smears off a laser-printed page when you touch it. Which part is likely at fault?", ["Fuser", "Pickup roller", "Transfer belt", "Duplexer"], 0, "The fuser melts toner onto the paper. If it is not hot enough the toner sits loose on the page. Pickup rollers cause paper feed problems instead.", "Laser printer fuser");
+add("hts", "A PC shuts itself off a few minutes into heavy use. The vents are clogged with dust. What is the likely cause?", ["Overheating", "A failed network card", "Low disk space", "An expired license"], 0, "Blocked airflow lets the CPU reach its thermal limit, and the system shuts down to protect itself. Clean the dust and check the fans.", "Computer cooling");
+add("hts", "A user can open websites by IP address but not by name. Which service is failing?", ["DHCP", "DNS", "NAT", "NTP"], 1, "DNS translates names into IP addresses. If addresses work and names do not, look at the DNS server settings.", "Domain Name System");
+add("hts", "Which tool checks that each wire in a network cable is connected to the correct pin?", ["Cable tester", "Loopback plug", "Toner probe", "Multimeter"], 0, "A cable tester checks continuity and the wiring order. A toner probe is for finding which cable is which, and a loopback plug tests a port.", "Cable tester");
+add("hts", "Which tool helps you find one specific cable among many in a wall or patch panel?", ["Crimper", "Punchdown tool", "Tone generator and probe", "Cable stripper"], 2, "The tone generator puts a signal on the cable, and the probe beeps when it is near the right one at the other end.", "Tone generator and probe");
+add("hts", "A drive reports S.M.A.R.T. errors. What does this mean?", ["The drive is encrypted", "The drive predicts it is likely to fail", "The drive needs a new driver", "The drive is full"], 1, "S.M.A.R.T. is the drive's built-in health monitoring. Treat a warning as a prompt to back up and replace the drive.", "S.M.A.R.T.");
+add("hts", "Wi-Fi in a kitchen drops whenever the microwave runs. What is the best fix?", ["Replace the network cable", "Connect on the 5 GHz band instead of 2.4 GHz", "Lower the router's transmit power", "Change the DNS server"], 1, "Microwave ovens interfere with the 2.4 GHz band. The 5 GHz band avoids that interference.", "Wi-Fi interference");
+add("hts", "A PC shows 'No boot device found'. What should you check first?", ["The monitor cable", "The boot order and the drive's connection", "The printer queue", "The sound card driver"], 1, "The firmware cannot find a drive to start from. Confirm the drive is detected and is first in the boot order before assuming it has failed.", "Boot order");
+
+// Operating Systems
+add("os", "Which file system does Windows use by default for its system drive?", ["FAT32", "exFAT", "NTFS", "ext4"], 2, "NTFS supports file permissions, encryption, compression and very large files. ext4 is a Linux file system.", "NTFS");
+add("os", "Which Windows command scans protected system files and repairs them?", ["chkdsk", "sfc /scannow", "ipconfig /all", "gpupdate"], 1, "sfc (System File Checker) repairs Windows system files. chkdsk checks the disk itself for file system errors and bad sectors.", "System File Checker");
+add("os", "Which Windows tool shows running processes and lets you end one?", ["Task Manager", "Disk Management", "Device Manager", "Event Viewer"], 0, "Task Manager (Ctrl+Shift+Esc) shows processes, performance and startup apps. Device Manager is for hardware and drivers.", "Windows Task Manager");
+add("os", "What is the built-in backup tool in macOS?", ["Time Machine", "Keychain", "Spotlight", "Finder"], 0, "Time Machine makes automatic backups. Keychain stores passwords, Spotlight is search and Finder is the file manager.", "Time Machine macOS");
+add("os", "Which Linux command lists the files in a directory?", ["pwd", "ls", "cp", "grep"], 1, "ls lists files. pwd shows which directory you are in, cp copies files and grep searches for text.", "ls command");
+add("os", "Which Linux command changes a file's permissions?", ["chown", "chmod", "sudo", "mv"], 1, "chmod changes permissions. chown changes who owns the file.", "chmod");
+add("os", "Which Linux command runs a single command with administrator rights?", ["su", "sudo", "apt", "man"], 1, "sudo runs one command as the superuser. su switches you to another user account entirely.", "sudo");
+add("os", "Which Windows edition cannot join a domain and does not include BitLocker?", ["Pro", "Enterprise", "Home", "Pro for Workstations"], 2, "The Home edition lacks domain join, BitLocker, Group Policy editing and the ability to host Remote Desktop sessions.", "Windows editions");
+add("os", "Which Windows command applies Group Policy changes immediately?", ["gpupdate /force", "gpresult /r", "net use", "sfc /scannow"], 0, "gpupdate /force reapplies all policies now. gpresult /r shows which policies are currently applied.", "Group Policy");
+add("os", "How much memory can a 32-bit operating system use at most?", ["About 2 GB", "About 4 GB", "About 16 GB", "About 64 GB"], 1, "A 32-bit system can address about 4 GB. Using more requires a 64-bit operating system and CPU.", "32-bit memory limit");
+add("os", "Which Windows tool creates, deletes and resizes partitions?", ["Disk Management", "Disk Cleanup", "Task Scheduler", "System Configuration"], 0, "Disk Management (diskmgmt.msc) handles partitions and drive letters. Disk Cleanup only removes unneeded files.", "Windows Disk Management");
+add("os", "Which file system suits a large flash drive that must work on both Windows and macOS and hold files over 4 GB?", ["FAT32", "exFAT", "NTFS", "APFS"], 1, "exFAT works on both systems and has no 4 GB file limit. FAT32 cannot store a single file larger than 4 GB.", "exFAT");
+
+// Security
+add("sec", "An email that pretends to be from your bank and asks you to confirm your password is an example of what?", ["Phishing", "Tailgating", "Dumpster diving", "Spoofed MAC address"], 0, "Phishing uses fake messages to trick people into giving up credentials. By phone it is called vishing and by text message smishing.", "Phishing");
+add("sec", "Following an authorized person through a secure door without badging in is called what?", ["Shoulder surfing", "Tailgating", "Whaling", "Evil twin"], 1, "Tailgating, or piggybacking, gets an intruder past a door on someone else's access. Access control vestibules are designed to prevent it.", "Tailgating security");
+add("sec", "Which type of malware encrypts your files and demands payment?", ["Spyware", "Ransomware", "Keylogger", "Rootkit"], 1, "Ransomware locks data and demands payment. Tested offline backups are the main defense.", "Ransomware");
+add("sec", "Giving users only the access they need to do their jobs is which principle?", ["Least privilege", "Defense in depth", "Implicit trust", "Single sign-on"], 0, "Least privilege limits the damage if an account is compromised or misused.", "Principle of least privilege");
+add("sec", "Which of these is multifactor authentication?", ["A password and a PIN", "A password and a code from an authenticator app", "Two different passwords", "A fingerprint and a face scan"], 1, "MFA needs factors of different types: something you know, something you have, something you are. A password and a PIN are both things you know.", "Multi-factor authentication");
+add("sec", "Which is the most secure Wi-Fi security standard?", ["WEP", "WPA", "WPA2", "WPA3"], 3, "WPA3 is the current standard. WEP and the original WPA are broken and should never be used.", "WPA3");
+add("sec", "Which Windows feature encrypts an entire drive?", ["BitLocker", "EFS", "Windows Defender Firewall", "UAC"], 0, "BitLocker encrypts whole drives. EFS encrypts individual files and folders.", "BitLocker");
+add("sec", "A phishing attack aimed specifically at a company's senior executives is called what?", ["Whaling", "Vishing", "Smishing", "Impersonation"], 0, "Whaling targets high-value individuals such as executives. Spear phishing is the broader term for any targeted phishing.", "Whaling phishing");
+add("sec", "In the malware removal process, what do you do right after verifying the symptoms?", ["Educate the end user", "Quarantine the infected system", "Enable System Restore", "Schedule future scans"], 1, "The order is: verify symptoms, quarantine, disable System Restore, remediate, schedule scans and updates, re-enable System Restore, educate the user.", "Malware removal");
+add("sec", "Which method does NOT reliably erase data from an SSD?", ["Physical shredding", "Degaussing", "The manufacturer's secure erase tool", "Incineration"], 1, "Degaussing uses a strong magnet, which works on hard drives and tapes. SSDs store data in flash memory and are not affected by magnets.", "Degaussing");
+add("sec", "Reading someone's screen or keyboard from behind them to steal information is called what?", ["Shoulder surfing", "Dumpster diving", "Brute force", "Spoofing"], 0, "Shoulder surfing is defeated with privacy screen filters and by being aware of who is nearby.", "Shoulder surfing");
+add("sec", "Which Windows feature asks for confirmation before a program makes administrator-level changes?", ["User Account Control", "BitLocker", "Windows Hello", "Credential Manager"], 0, "User Account Control (UAC) shows the consent prompt, so software cannot change system settings without you noticing.", "User Account Control");
+
+// Software Troubleshooting
+add("sts", "A PC shows a blue screen on startup right after a new driver was installed. What is the best first step?", ["Reinstall Windows", "Boot into Safe Mode and roll back the driver", "Replace the RAM", "Format the drive"], 1, "Safe Mode loads only basic drivers, so you can get in and undo the change. Always try the least destructive fix first.", "Windows Safe Mode");
+add("sts", "A browser keeps redirecting to unfamiliar sites and showing pop-ups. What is the most likely cause?", ["A failing hard drive", "Malware or an unwanted browser extension", "A weak Wi-Fi signal", "An outdated monitor driver"], 1, "Redirects and pop-ups are classic signs of adware or a malicious extension. Remove suspicious extensions and run a malware scan.", "Browser hijacking");
+add("sts", "A Windows application has frozen and will not close. What should you use?", ["Task Manager", "Disk Management", "Registry Editor", "System Information"], 0, "Open Task Manager with Ctrl+Shift+Esc, select the app and choose End task.", "Windows Task Manager");
+add("sts", "Windows fails to start and loops back to a recovery screen. Which tool is designed for this?", ["Startup Repair in the Windows Recovery Environment", "Disk Cleanup", "Performance Monitor", "Print Management"], 0, "The Windows Recovery Environment includes Startup Repair, System Restore and a command prompt for fixing boot problems.", "Windows Recovery Environment");
+add("sts", "One app on a phone keeps crashing while everything else works. What should you try first?", ["Factory reset the phone", "Force stop the app, then update or reinstall it", "Replace the battery", "Change the carrier"], 1, "Start with the smallest fix: force stop, clear the app's cache, update or reinstall. A factory reset is the last resort.", "Mobile app troubleshooting");
+add("sts", "A PC is very slow and the disk shows 100% usage. What should you check first?", ["Task Manager, to see which process is using the disk", "The monitor's refresh rate", "The keyboard layout", "The printer queue"], 0, "Task Manager and Resource Monitor show which process is responsible, so you can deal with the cause instead of guessing.", "Windows Resource Monitor");
+add("sts", "Every secure website shows a certificate warning on one PC. What should you check first?", ["The system date and time", "The screen resolution", "The default printer", "The sound settings"], 0, "Certificates are only valid between certain dates. If the PC's clock is wrong, valid certificates look expired or not yet valid.", "Public key certificate");
+add("sts", "After installing an app from outside the official store, a phone runs hot, drains its battery and uses lots of data. What is the likely cause?", ["Normal battery aging", "Malware", "A cracked screen", "Low storage"], 1, "High data use, heat and battery drain after sideloading an app point to malware. Uninstall the app and scan the device.", "Mobile malware");
+add("sts", "Windows warns that the system drive is almost full. Which built-in tool frees space safely?", ["Disk Cleanup or Storage Sense", "Device Manager", "Task Scheduler", "System Configuration"], 0, "Disk Cleanup and Storage Sense remove temporary files, old update files and the contents of the Recycle Bin.", "Disk Cleanup");
+add("sts", "Where in Windows do you find logged details about an application crash?", ["Event Viewer", "Control Panel", "File Explorer", "Snipping Tool"], 0, "Event Viewer holds the Application, System and Security logs, with the time and error details for each event.", "Event Viewer");
+add("sts", "Print jobs are stuck in the queue and will not delete. What usually fixes it?", ["Restarting the Print Spooler service", "Reinstalling Windows", "Replacing the toner", "Changing the paper size"], 0, "The Print Spooler service manages the queue. Restarting it clears stuck jobs.", "Print spooler");
+
+// Operational Procedures
+add("ops", "What protects computer components from static damage while you work on them?", ["An ESD wrist strap", "A surge protector", "Rubber gloves", "A magnetic screwdriver"], 0, "An ESD strap keeps you at the same electrical potential as the equipment, so no static discharge jumps to the components.", "Electrostatic discharge");
+add("ops", "In change management, which document explains how to undo a change if it fails?", ["Rollback plan", "Acceptable use policy", "Network diagram", "Asset tag"], 0, "A rollback, or backout, plan describes how to return to the previous working state. It is prepared before the change is approved.", "Change management");
+add("ops", "What does the 3-2-1 backup rule mean?", ["3 backups a day, 2 a week, 1 a month", "3 copies of the data, on 2 types of media, with 1 kept offsite", "3 servers, 2 drives, 1 tape", "3 users, 2 passwords, 1 administrator"], 1, "Three copies, two different media types and one offsite copy protect against drive failure, site disasters and ransomware.", "3-2-1 backup rule");
+add("ops", "Which class of fire extinguisher is rated for electrical fires?", ["Class A", "Class B", "Class C", "Class K"], 2, "Class C is for energized electrical equipment. Class A is ordinary combustibles like paper and Class B is flammable liquids.", "Fire extinguisher classes");
+add("ops", "Which document sets out what employees may and may not do on company systems?", ["Acceptable use policy", "Service-level agreement", "Incident report", "Knowledge base article"], 0, "The acceptable use policy (AUP) defines permitted use of the organization's equipment and network.", "Acceptable use policy");
+add("ops", "What does an incremental backup copy?", ["Everything, every time", "Only what changed since the last full backup", "Only what changed since the last backup of any type", "Only the operating system files"], 2, "Incremental copies changes since the last backup of any kind, so it is small and fast. Differential copies everything changed since the last full backup.", "Incremental backup");
+add("ops", "Where do you find handling and disposal information for a hazardous material such as toner?", ["Safety data sheet", "End-user license agreement", "Network topology diagram", "Warranty card"], 0, "The safety data sheet (SDS, formerly MSDS) covers hazards, safe handling, first aid and disposal.", "Safety data sheet");
+add("ops", "A customer is upset and talking fast about a problem. What is the best response?", ["Interrupt to correct their mistakes", "Listen actively without interrupting, then restate the problem", "Explain that it is their own fault", "Use technical terms to show expertise"], 1, "Let the customer finish, then restate the issue to confirm you understood. Avoid jargon, arguing and blame.", "Active listening");
+add("ops", "Which device keeps a PC running on battery for a short time during a power cut?", ["Surge protector", "UPS", "Power strip", "KVM switch"], 1, "An uninterruptible power supply (UPS) has a battery, giving time to save work and shut down properly. A surge protector only blocks voltage spikes.", "Uninterruptible power supply");
+add("ops", "What does chain of custody record?", ["Software license counts", "Everyone who handled a piece of evidence, and when", "The order servers are restarted", "A backup rotation schedule"], 1, "Chain of custody documents who had the evidence at every moment, so it can be trusted later in legal or disciplinary proceedings.", "Chain of custody");
+add("ops", "Which file extension is a PowerShell script?", [".sh", ".py", ".ps1", ".bat"], 2, ".ps1 is PowerShell. .sh is a Linux shell script, .py is Python and .bat is a Windows batch file.", "PowerShell");
+
+/* ----- Scenario questions: longer, closer to how the exam words things ----- */
+
+// Mobile Devices
+add("mob", "A laptop's screen is almost black, but when you shine a flashlight on it you can faintly see the desktop. An external monitor works normally. What has most likely failed?", ["The graphics chip", "The backlight or its inverter", "The memory", "The display driver"], 1, "The image is there, so the graphics chip, driver and LCD panel are all working. What is missing is the light behind the panel. The working external monitor confirms the laptop is producing video. The flashlight test is the standard way to tell a dead backlight from a dead screen.", "LCD backlight");
+add("mob", "A sales rep wants work email, calendar and contacts on a phone, kept in sync both ways with the company's Microsoft 365 account. What should you set up?", ["A POP3 mail account", "The Microsoft 365 (Exchange) account in the phone's account settings", "A Bluetooth pairing with the office PC", "A weekly USB file copy"], 1, "An Exchange account syncs mail, calendar and contacts in both directions, so a change on the phone appears everywhere. POP3 only downloads email and knows nothing about calendars or contacts.", "Exchange ActiveSync");
+add("mob", "A phone used to connect to a Bluetooth speaker but now fails every time. Other phones connect to the speaker without trouble. What should you try first?", ["Factory reset the phone", "Remove the speaker from the phone's Bluetooth list, then pair again", "Replace the speaker", "Turn off Wi-Fi permanently"], 1, "Other phones work, so the speaker is fine and the fault is the saved pairing on this phone. Forgetting the device and pairing again rebuilds it. Always try the small, reversible fix before something drastic like a factory reset.", "Bluetooth pairing");
+add("mob", "You are about to replace a laptop's keyboard. What should you do first?", ["Remove the display", "Disconnect the AC adapter and the battery", "Update the firmware", "Remove the storage drive"], 1, "Remove all power before opening any device. With a laptop that means the charger and the battery, because the board stays live while the battery is connected. Then ground yourself against static.", "Laptop repair safety");
+add("mob", "An employee travels with a laptop that holds confidential files. Which measure best protects the data if the laptop is stolen?", ["A cable lock", "Full-disk encryption with a strong sign-in", "A screen privacy filter", "Turning off Bluetooth"], 1, "Encryption makes the drive unreadable without the sign-in, even if the thief removes the drive and connects it to another computer. A cable lock only deters theft, and a privacy filter only stops people reading the screen.", "Disk encryption");
+
+// Networking
+add("net", "A small office has one public IP address from its internet provider and 20 PCs that all need internet access. Which router feature makes this possible?", ["DHCP", "NAT", "DNS", "QoS"], 1, "Network address translation (NAT) lets many private addresses share one public address. The router rewrites each outgoing connection and keeps track of which reply belongs to which PC. DHCP only hands out the private addresses.", "Network address translation");
+add("net", "A PC has the address 192.168.1.50 and can reach other PCs and the printer in the office, but it cannot reach any website, by name or by IP address. Every other PC is fine. What should you check first on that PC?", ["The default gateway setting", "The DNS server setting", "The screen saver", "The MAC address"], 0, "Local devices respond, so the network card, cable and IP address are fine. Nothing outside the network responds, which points to the default gateway, the address a PC uses to leave its own network. If only names failed and IP addresses worked, DNS would be the suspect.", "Default gateway");
+add("net", "You want guest Wi-Fi users kept separate from office PCs, even though both use the same switches. What should you configure?", ["A VLAN for guests", "A longer DHCP lease", "A static IP for each guest", "Port forwarding"], 0, "A VLAN splits one physical switch into separate logical networks. Guest traffic then cannot reach office devices unless a router or firewall rule allows it.", "Virtual LAN");
+add("net", "An employee working from a hotel needs secure access to file shares that are only available inside the office network. What should they use?", ["A VPN", "A public proxy", "Port 80", "Telnet"], 0, "A VPN creates an encrypted tunnel from the laptop to the office network, so internal resources become reachable and the hotel network cannot read the traffic.", "Virtual private network");
+add("net", "A network printer must always have the same IP address, but you still want addresses managed centrally. What is the best approach?", ["Set a random static IP on the printer", "Create a DHCP reservation for the printer", "Shorten the DHCP lease time", "Give the printer an APIPA address"], 1, "A DHCP reservation ties an IP address to the printer's MAC address. The printer always receives the same address, and the record lives on the DHCP server where it cannot be handed to another device by mistake.", "DHCP reservation");
+
+// Hardware
+add("hw", "You plan to add a high-end graphics card to a PC with a 450 W power supply. What should you check before buying the card?", ["Whether the power supply has enough wattage and the right power connectors", "The size of the monitor", "The speed of the network card", "The keyboard layout"], 0, "Graphics cards are usually the biggest power draw in a PC and often need their own 6-pin or 8-pin power cables. An underpowered supply causes random shutdowns and restarts under load.", "Power supply unit");
+add("hw", "A file server has four drives. It must keep running if any one drive fails, and it should lose as little storage capacity as possible to redundancy. Which RAID level fits?", ["RAID 0", "RAID 1", "RAID 5", "RAID 10"], 2, "RAID 5 across four drives gives the capacity of three and survives one failure. RAID 10 also survives a failure but only gives the capacity of two. RAID 0 has no protection, and RAID 1 is a simple two-drive mirror.", "RAID levels");
+add("hw", "Right after a memory upgrade, a PC powers on but shows no video and beeps. What should you check first?", ["That the new memory is fully seated and is the right type for the motherboard", "The Windows license", "The network cable", "The printer driver"], 0, "When a problem appears straight after a change, suspect the change. Memory that is not pushed in until both clips lock, or that is the wrong generation for the board, stops the PC passing its power-on test.", "DIMM");
+add("hw", "A laptop has only USB-C ports. The user wants wired networking, two monitors and a keyboard connected at the desk with a single cable. What do you recommend?", ["A docking station", "A KVM switch", "A USB hub with no power", "A crossover cable"], 0, "A USB-C or Thunderbolt docking station carries video, network, USB and charging over one cable. A KVM switch does a different job: it shares one keyboard, monitor and mouse between several computers.", "Docking station");
+add("hw", "A warehouse prints multi-part carbonless forms, where the print has to press through to the copies underneath. Which printer type is required?", ["Laser", "Inkjet", "Thermal", "Impact"], 3, "Only an impact printer physically strikes the paper, which is what transfers the image to the lower copies. Laser and inkjet printers mark only the top sheet.", "Dot matrix printing");
+
+// Virtualization and Cloud Computing
+add("virt", "You are about to install a risky update inside a virtual machine. What should you do first so you can undo it easily?", ["Take a snapshot of the virtual machine", "Add more virtual memory", "Rename the virtual machine", "Disconnect the host from the network"], 0, "A snapshot saves the virtual machine's exact state. If the update goes wrong you revert in seconds. This is one of the main reasons testing is done in virtual machines.", "Virtual machine snapshot");
+add("virt", "A host must run six virtual machines that each need 4 GB of memory. The host's own operating system needs 4 GB. How much memory does the host need at minimum?", ["16 GB", "24 GB", "28 GB", "8 GB"], 2, "Six machines at 4 GB each is 24 GB, plus 4 GB for the host, which makes 28 GB. In practice you would install 32 GB. Memory is usually the first resource a virtualization host runs out of.", "Virtual machine");
+add("virt", "Developers want to upload their web application's code and have it run, without managing servers or operating system patches. Which cloud model is this?", ["IaaS", "PaaS", "SaaS", "A private data center"], 1, "Platform as a service (PaaS) supplies the servers, operating system and runtime, and the customer supplies only the code. With IaaS they would still manage the operating system. SaaS would be a finished application.", "Platform as a service");
+add("virt", "A virtual machine must appear on the office network as its own device, with its own IP address from the office DHCP server. Which virtual network mode should you choose?", ["NAT", "Bridged", "Host-only", "Internal"], 1, "Bridged mode connects the virtual machine directly to the physical network, as if it were another PC plugged into the switch. NAT hides it behind the host's address, and host-only limits it to talking with the host.", "Bridged networking");
+add("virt", "Which statement about the security of a virtual machine is true?", ["It needs the same updates and security software as a physical PC", "It cannot be infected by malware", "It is automatically protected by the host's antivirus", "It never needs a firewall"], 0, "A virtual machine is a full computer with its own operating system, so it needs its own patching, anti-malware and firewall. The host's protection does not reach inside the guest.", "Virtualization security");
+
+// Hardware and Network Troubleshooting
+add("hts", "A user says the internet is down. Their PC has a 169.254.x.x address and the link light on its network port is off. The PCs around them work. What is the most likely cause?", ["A failed DNS server", "A bad cable or switch port", "An expired Windows license", "A full hard drive"], 1, "No link light means there is no physical connection, so start at the cable and the port. The 169.254 address is a result, not the cause: with no connection the PC could not reach the DHCP server. Neighbors working rules out the server and the internet line.", "Network troubleshooting");
+add("hts", "A PC restarts at random. You suspect the power supply is failing. According to CompTIA's troubleshooting methodology, what is the next step?", ["Document the findings", "Test the theory, for example with a known-good power supply", "Replace the motherboard", "Verify full system functionality"], 1, "You have identified the problem and formed a theory. Next you test the theory to confirm the cause before spending money or making changes. If the test disproves it, you form a new theory or escalate.", "Troubleshooting methodology");
+add("hts", "A PC connects to a gigabit switch but only links at 100 Mbps. It is wired with an old, kinked Cat 5 cable. What is the best fix?", ["Replace the cable with Cat 5e or Cat 6", "Reinstall the operating system", "Change the DNS server", "Add more memory"], 0, "Gigabit Ethernet needs all four wire pairs in good condition. With a damaged or lower-grade cable the link drops back to 100 Mbps, which only needs two pairs.", "Ethernet over twisted pair");
+add("hts", "An inkjet printer's pages have thin horizontal gaps where a color is missing. What should you do first?", ["Replace the fuser", "Run the printer's head-cleaning cycle", "Replace the power cable", "Install more memory in the printer"], 1, "Missing lines on an inkjet mean clogged nozzles. The head-cleaning routine pushes ink through to clear them. Inkjets have no fuser, which is a laser printer part.", "Inkjet printing");
+add("hts", "After a thunderstorm, a desktop PC shows no lights and no fans when the power button is pressed. A lamp works in the same outlet. Which component do you test first?", ["The power supply", "The hard drive", "The graphics card", "The memory"], 0, "With no sign of power at all and a working outlet, the power supply is the first suspect, especially after a surge. Test it with a power supply tester or swap in a known-good one.", "Power supply unit");
+
+// Operating Systems
+add("os", "From the command line, you need to connect the shared folder \\\\FS1\\Reports as drive R:. Which command does it?", ["net use R: \\\\FS1\\Reports", "ipconfig /R: \\\\FS1\\Reports", "chkdsk R: \\\\FS1\\Reports", "cd R: \\\\FS1\\Reports"], 0, "net use maps a network share to a drive letter. The path format is two backslashes, the server name, one backslash, then the share name.", "net use command");
+add("os", "A company wants to move 200 PCs from Windows 10 to Windows 11 and keep each user's applications, settings and files. Which installation type should it use?", ["Clean install", "In-place upgrade", "Recovery partition reset", "Dual boot"], 1, "An in-place upgrade installs the new version over the old and keeps applications, settings and data. A clean install wipes the drive, so everything would have to be reinstalled and restored.", "Windows upgrade");
+add("os", "On Linux, which command shows only the lines containing the word error in the file /var/log/syslog?", ["ls error /var/log/syslog", "grep error /var/log/syslog", "chmod error /var/log/syslog", "pwd /var/log/syslog"], 1, "grep searches for text and prints the matching lines. It is the everyday tool for finding entries in log files.", "grep");
+add("os", "A new employee's laptop runs Windows 11 Home. It needs to join the company's Active Directory domain. What has to happen?", ["Nothing, Home can join a domain", "Upgrade the laptop to Windows 11 Pro", "Install more memory", "Switch the laptop to a 32-bit version"], 1, "Home editions cannot join a domain. Pro, Enterprise and Education can. This is one of the most tested differences between editions.", "Windows editions");
+add("os", "A user has Full Control in a folder's NTFS permissions but only Read in its share permissions. What can the user do when opening the folder over the network?", ["Read only", "Full control", "Nothing", "Modify"], 0, "Over the network, both sets of permissions apply and the more restrictive one wins, so the user gets Read. Signed in directly at the computer, only the NTFS permissions would apply.", "NTFS permissions");
+
+// Security
+add("sec", "Someone phones a user, says they are from IT support, and asks for the user's password to fix an urgent problem. What should the user do?", ["Give the password, since the issue is urgent", "Refuse, hang up and report the call through the official help desk", "Email the password instead", "Change the password to something simpler first"], 1, "This is vishing, social engineering by phone. Real IT staff do not need your password. Urgency is the pressure tactic. Verify by contacting the help desk yourself using a number you already trust.", "Voice phishing");
+add("sec", "During malware removal on a Windows PC, why is System Restore turned off before cleaning?", ["To speed up the scan", "Because malware can hide in restore points and come back", "To free up memory", "Because antivirus cannot run otherwise"], 1, "Restore points can contain infected files. If they are kept, restoring later brings the malware back. You turn System Restore back on and create a clean restore point once the system is clean.", "System Restore");
+add("sec", "An employee has left the company today. What should be done with their user account first?", ["Delete it immediately", "Disable it immediately", "Leave it active for 30 days", "Change its display name"], 1, "Disabling blocks access straight away while keeping the account's files, mailbox and audit history, which may be needed later. Deletion can come afterward, in line with company policy.", "User account management");
+add("sec", "In a coffee shop, a laptop joins a network with the shop's name and a strong signal. A sign-in page then asks for the user's email password. What attack is this most likely?", ["Evil twin", "Brute force", "SQL injection", "Tailgating"], 0, "An evil twin is a fake access point that copies a real network's name to capture credentials and traffic. A public Wi-Fi sign-in page has no reason to ask for your email password.", "Evil twin wireless attack");
+add("sec", "A small office's wireless router still has its default administrator password and has WPS turned on. What should you do?", ["Change the administrator password and turn off WPS", "Hide the network name and nothing else", "Switch security to WEP", "Lower the transmit power only"], 0, "Default passwords are published online, and WPS has a known weakness that lets attackers recover the Wi-Fi key. Fixing these two things is the baseline for securing a small office router.", "Wi-Fi Protected Setup");
+
+// Software Troubleshooting
+add("sts", "A PC became unstable after a recent update. Which tool returns Windows system files and settings to an earlier date without touching the user's documents?", ["System Restore", "Disk Cleanup", "Format", "Disk Management"], 0, "System Restore rolls back system files, drivers and registry settings to a restore point. Personal files are left as they are.", "System Restore");
+add("sts", "A PC takes several minutes to become usable after sign-in. Many programs open automatically. What is the best fix?", ["Disable unneeded items on Task Manager's Startup tab", "Reinstall Windows", "Replace the monitor", "Delete the user's documents"], 0, "Every program that launches at sign-in competes for the disk and processor. Turning off the ones the user does not need is quick, free and easy to reverse.", "Windows startup programs");
+add("sts", "An application crashes for one user, but works for everyone else who signs in on the same PC. What is the most likely cause?", ["The application is not installed", "That user's profile or personal app settings are corrupted", "The hard drive has failed", "The PC has too little memory"], 1, "The application works for other people on the same hardware, so the installation and the PC are fine. What differs is the user's own profile. Testing with a fresh profile confirms it.", "Windows user profile");
+add("sts", "A full-screen browser message says the PC is infected and tells the user to call a phone number for support. What should the user do?", ["Call the number", "Close the browser, using Task Manager if needed, and run a malware scan", "Type their password into the message", "Pay the fee shown"], 1, "This is a tech support scam. Real security warnings never ask you to phone a number. Close the browser without clicking inside the message, then scan the PC.", "Technical support scam");
+add("sts", "A program written for an older version of Windows will not start on Windows 11. What should you try first?", ["Run the program in compatibility mode", "Format the drive", "Replace the processor", "Disable the firewall permanently"], 0, "Compatibility mode, on the Compatibility tab of the program's properties, makes Windows behave like an earlier version for that one program.", "Windows compatibility mode");
+
+// Operational Procedures
+add("ops", "You need to replace a core network switch. Under change management, what must be in place before the work begins?", ["An approved change request with a risk assessment, a rollback plan and a scheduled window", "A verbal OK from a coworker", "Nothing, if the work is quick", "A new acceptable use policy"], 0, "Change management exists so that changes are reviewed, scheduled and reversible. The request documents the purpose, scope, risk and rollback plan, and it is approved before the work starts.", "Change management");
+add("ops", "A server gets a full backup every Sunday and a differential backup every other night. The drive fails on Thursday morning. What do you restore?", ["Sunday's full backup only", "Sunday's full backup, then Wednesday's differential", "Sunday's full backup, then every differential in order", "Wednesday's differential only"], 1, "Each differential holds everything changed since the last full backup, so you need only the full and the most recent differential. With incremental backups you would need the full and every incremental since.", "Differential backup");
+add("ops", "While repairing a PC, you find files that appear to be illegal. What should you do?", ["Delete the files", "Stop work, leave the system as it is, and report it through the proper channel", "Copy the files to a USB drive for yourself", "Confront the user"], 1, "As first responder your job is to preserve the evidence and report it according to policy. Do not alter, copy or delete anything. Document what you saw and who handled the device from that point on.", "Incident response");
+add("ops", "A shop's point-of-sale system stores customers' credit card numbers. Which standard governs how that data must be protected?", ["PCI DSS", "GDPR", "HIPAA", "An end-user license agreement"], 0, "PCI DSS is the payment card industry's security standard. HIPAA covers health information, and GDPR covers the personal data of people in the European Union.", "PCI DSS");
+add("ops", "You are running 30 minutes late for an on-site appointment with a customer. What is the professional thing to do?", ["Arrive late and apologize then", "Contact the customer now to tell them", "Reschedule without telling them", "Skip the appointment"], 1, "Communicate early and set expectations. Customers accept a delay far more readily than a missed appointment they were not warned about.", "Customer service");
+
+/* ---------- 3. FLASHCARDS ----------
+   Each line is: [deck, front of card, back of card] */
+const CARDS = [
+  ["Ports", "20 / 21", "FTP: file transfer, not encrypted"],
+  ["Ports", "22", "SSH: encrypted remote command line (also SFTP)"],
+  ["Ports", "23", "Telnet: remote command line, not encrypted"],
+  ["Ports", "25", "SMTP: sending email"],
+  ["Ports", "53", "DNS: turns names into IP addresses"],
+  ["Ports", "67 / 68", "DHCP: hands out IP addresses"],
+  ["Ports", "80", "HTTP: web traffic, not encrypted"],
+  ["Ports", "110", "POP3: downloading email"],
+  ["Ports", "137 to 139", "NetBIOS: older Windows name and file sharing"],
+  ["Ports", "143", "IMAP: email kept in sync on the server"],
+  ["Ports", "161 / 162", "SNMP: monitoring network devices"],
+  ["Ports", "389", "LDAP: directory services"],
+  ["Ports", "443", "HTTPS: encrypted web traffic"],
+  ["Ports", "445", "SMB: Windows file and printer sharing"],
+  ["Ports", "3389", "RDP: Remote Desktop"],
+  ["Acronyms", "APIPA", "Automatic Private IP Addressing. A 169.254.x.x address, meaning no DHCP server answered."],
+  ["Acronyms", "POST", "Power-on self-test. The hardware check a PC runs before loading the operating system."],
+  ["Acronyms", "UEFI", "Unified Extensible Firmware Interface. The modern replacement for BIOS."],
+  ["Acronyms", "TPM", "Trusted Platform Module. A chip that stores encryption keys."],
+  ["Acronyms", "RAID", "Redundant Array of Independent Disks. Combines drives for speed, redundancy or both."],
+  ["Acronyms", "NVMe", "Non-Volatile Memory Express. Fast SSD storage over the PCIe bus."],
+  ["Acronyms", "MDM", "Mobile device management. Enforces policy and remotely wipes phones and tablets."],
+  ["Acronyms", "VDI", "Virtual desktop infrastructure. Desktops hosted on a server and delivered over the network."],
+  ["Acronyms", "SaaS / PaaS / IaaS", "Software, platform or infrastructure as a service. From a finished app down to raw virtual machines."],
+  ["Acronyms", "MFA", "Multifactor authentication. Two or more different types of proof of identity."],
+  ["Acronyms", "UAC", "User Account Control. The Windows prompt before administrator-level changes."],
+  ["Acronyms", "AUP", "Acceptable use policy. What users may do on company systems."],
+  ["Acronyms", "SDS", "Safety data sheet. Handling and disposal information for hazardous materials."],
+  ["Acronyms", "UPS", "Uninterruptible power supply. Battery backup during a power cut."],
+  ["Acronyms", "ESD", "Electrostatic discharge. Static that can damage components."],
+  ["Commands", "ipconfig", "Windows: show IP address settings. /all for full detail, /release and /renew for DHCP."],
+  ["Commands", "ping", "Test whether a device responds on the network."],
+  ["Commands", "tracert", "Windows: show each hop on the route to a destination."],
+  ["Commands", "nslookup", "Look up DNS records for a name."],
+  ["Commands", "sfc /scannow", "Windows: scan and repair protected system files."],
+  ["Commands", "chkdsk", "Windows: check a disk for file system errors and bad sectors."],
+  ["Commands", "gpupdate /force", "Windows: reapply Group Policy now."],
+  ["Commands", "netstat", "Show active network connections and listening ports."],
+  ["Commands", "ls", "Linux: list files in a directory."],
+  ["Commands", "chmod", "Linux: change file permissions."],
+  ["Commands", "sudo", "Linux: run one command with administrator rights."],
+  ["Commands", "grep", "Linux: search for text inside files or output."]
+];
+
+/* ---------- 4. STUDY LINKS (checked October 2026) ---------- */
+const RESOURCES = [
+  { group: "Official exam information", items: [
+    ["CompTIA A+ Core 1 (220-1201)", "https://www.comptia.org/en-us/certifications/a/core-1-v15/", "Exam details and the downloadable objectives. The objectives list is the definitive checklist of what can be asked."],
+    ["CompTIA A+ Core 2 (220-1202)", "https://www.comptia.org/en-us/certifications/a/core-2-v15/", "The same for the second exam."]
+  ]},
+  { group: "Free video courses", items: [
+    ["Professor Messer: Core 1 course", "https://www.professormesser.com/free-a-plus-training/220-1201/220-1201-video/220-1201-training-course/", "Free videos that follow the Core 1 objectives in order."],
+    ["Professor Messer: Core 2 course", "https://www.professormesser.com/free-a-plus-training/220-1202/220-1202-video/220-1202-training-course/", "Free videos that follow the Core 2 objectives in order."]
+  ]},
+  { group: "Reference", items: [
+    ["Microsoft Learn: Windows commands", "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/windows-commands", "Every Windows command-line tool, with syntax and examples."],
+    ["Linux man pages online", "https://man7.org/linux/man-pages/", "The manual page for each Linux command."]
+  ]}
+];
+
+/* ---------- 5. THE APP ---------- */
+
+/* How the review schedule works (spaced repetition):
+   Every question sits in a "box" from 0 to 5. The box decides how long until you see it again.
+     - Answer correctly when it is due: it moves up one box, so the gap gets longer.
+     - Answer wrongly at any time: it drops to box 0 and comes back tomorrow.
+   A question counts as "learned" once it reaches box 3, which means you remembered it
+   on at least three separate days, with growing gaps in between. */
+const GAP_DAYS = [1, 1, 3, 7, 14, 30];   // days until the next review, for boxes 0 to 5
+const LEARNED_BOX = 3;
+const NEW_PER_DAY = 10;                  // how many brand-new questions a daily session adds
+
+// Today as a whole number of days, in your local time zone. Used to compare dates simply.
+function today() {
+  const now = new Date();
+  return Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
+}
+
+// Saved state. It is always kept in this browser. On the published page it is also saved to your
+// Claude account (see "Saving to your Claude account" below), so it follows you between devices.
+const STORE_KEY = "aplus-study-progress";
+let state = { v: 2, cards: {}, streak: 0, lastDay: null, newDay: null, newToday: 0, recallFirst: false, updated: 0, resetAt: 0 };
+try {
+  const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+  if (raw && raw.v === 2) {
+    state = Object.assign(state, raw);
+  } else if (raw) {
+    // Progress from the first version of the app: bring every answered question in as due now.
+    for (const id in raw) state.cards[id] = { box: raw[id] === true ? 1 : 0, due: today(), t: Date.now() };
+  }
+} catch (e) { /* keep the empty state */ }
+function saveLocal() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+}
+function save() {
+  state.updated = Date.now();
+  saveLocal();
+  cloudPush();
+}
+
+/* ----- Saving to an account -----
+   Progress can follow you between devices in two ways, depending on where the app is running:
+     - On the page published inside Claude, you are already signed in to Claude, so the page asks
+       Claude who is viewing and keeps one private document of progress for that person.
+     - In the installable web app, you sign in with an email and password. Accounts and progress
+       are kept in a Supabase project (see "Accounts for the installable web app" below).
+   Opened straight from a folder, with neither, it saves in the browser only.
+   Either way the rest of the app only talks to "cloudDoc", which has two actions: get and set. */
+let cloudDoc = null;          // where this person's progress lives, once connected
+let cloudState = "local";     // "local", "synced" or "error"
+let pushTimer = null;
+let atHome = false;
+let saveNote = null;          // the line of text on the home screen that reports where progress is saved
+
+function saveMessage() {
+  if (sb) {
+    if (cloudState === "synced") return "Progress is saved to your account, so it is the same on every device where you sign in.";
+    if (cloudState === "error") return "Could not reach your account just now. Progress is saved on this device and will sync when you are back online.";
+    return "Progress is saved on this device only. Sign in to keep it on every device.";
+  }
+  if (cloudState === "synced") return "Progress is saved to your Claude account, so it is the same on every device where you open this page.";
+  if (cloudState === "error") return "Could not reach your Claude account just now. Progress is saved in this browser and will sync when the page reconnects.";
+  return "Progress is saved in this browser only.";
+}
+function setCloud(value) {
+  cloudState = value;
+  if (saveNote) saveNote.textContent = saveMessage();
+}
+
+// Combine progress from this browser with progress from the account: for each question keep
+// whichever copy was answered most recently, and drop anything older than the last reset.
+function mergeState(local, remote) {
+  const newer = (remote.updated || 0) > (local.updated || 0) ? remote : local;
+  const merged = Object.assign({}, local, newer, { cards: {} });
+  merged.resetAt = Math.max(local.resetAt || 0, remote.resetAt || 0);
+  const ids = new Set(Object.keys(local.cards || {}).concat(Object.keys(remote.cards || {})));
+  ids.forEach(id => {
+    const a = (local.cards || {})[id], b = (remote.cards || {})[id];
+    const best = !a ? b : !b ? a : ((b.t || 0) > (a.t || 0) ? b : a);
+    if ((best.t || 0) >= merged.resetAt) merged.cards[id] = { box: best.box, due: best.due, t: best.t || 0 };
+  });
+  return merged;
+}
+
+function cloudPush() {
+  if (!cloudDoc) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {       // wait a moment so several quick answers become one save
+    cloudDoc.set(JSON.parse(JSON.stringify(state))).then(() => setCloud("synced"), () => setCloud("error"));
+  }, 1500);
+}
+
+async function cloudPull() {
+  if (!cloudDoc) return;
+  try {
+    const snap = await cloudDoc.get();
+    const remote = snap.exists ? snap.data() : null;
+    if (remote && remote.v === 2) {
+      const before = JSON.stringify(state.cards);
+      state = mergeState(state, JSON.parse(JSON.stringify(remote)));
+      saveLocal();
+      if (JSON.stringify(state.cards) !== JSON.stringify(remote.cards || {})) cloudPush();
+      if (atHome && JSON.stringify(state.cards) !== before) showHome();
+    } else if (Object.keys(state.cards).length) {
+      cloudPush();                     // first time on this account: upload what this browser has
+    }
+    setCloud("synced");
+  } catch (e) { setCloud("error"); }
+}
+
+async function cloudStart() {
+  // Pick up progress made on another device whenever you come back to the app.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) cloudPull(); });
+  try {
+    const config = window.APP_CONFIG || {};
+    if (window.supabase && config.supabaseUrl && config.supabaseKey) {
+      supabaseStart(config);
+    } else if (window.claude && window.claude.use) {
+      const db = await window.claude.use("db");
+      const user = await window.claude.use("user");
+      if (!db || !user) return;
+      const id = await user.id();
+      if (!id) return;
+      cloudDoc = db.doc("data/users/" + id + "/progress");
+      await cloudPull();
+    }
+  } catch (e) { setCloud("error"); }
+}
+
+/* ----- Accounts for the installable web app (Supabase) -----
+   Supabase provides the sign-in and a database. This app uses one table, "progress", with one row
+   per person. The database itself enforces that a signed-in person can only read and write their
+   own row (row level security, set up in supabase.sql), so the key in config.js is safe to publish. */
+let sb = null;            // the Supabase client, when config.js is filled in
+let account = null;       // the signed-in email address, or null
+let accountMsg = "";      // feedback shown under the sign-in form
+let draftEmail = "";
+
+function supabaseStart(config) {
+  sb = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+  // Runs at start-up with any saved session, and again on every sign-in and sign-out.
+  sb.auth.onAuthStateChange((event, session) => { setTimeout(() => useSession(session), 0); });
+  if (atHome) showHome();
+}
+
+function useSession(session) {
+  const user = session ? session.user : null;
+  const before = account;
+  account = user ? user.email : null;
+  if (user) {
+    const mine = () => sb.from("progress");
+    cloudDoc = {
+      get: async () => {
+        const r = await mine().select("data").eq("user_id", user.id).maybeSingle();
+        if (r.error) throw r.error;
+        return { exists: !!r.data, data: () => (r.data ? r.data.data : undefined) };
+      },
+      set: async data => {
+        const r = await mine().upsert({ user_id: user.id, data, updated_at: new Date().toISOString() });
+        if (r.error) throw r.error;
+      }
+    };
+    if (before !== account) cloudPull();
+  } else {
+    cloudDoc = null;
+    setCloud("local");
+  }
+  if (before !== account && atHome) showHome();
+}
+
+async function signIn(create) {
+  const email = document.getElementById("acct-email").value.trim();
+  const password = document.getElementById("acct-pass").value;
+  draftEmail = email;
+  if (!email || password.length < 8) { accountMsg = "Enter your email and a password of at least 8 characters."; showHome(); return; }
+  accountMsg = create ? "Creating your account..." : "Signing in...";
+  showHome();
+  try {
+    const result = create
+      ? await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } })
+      : await sb.auth.signInWithPassword({ email, password });
+    if (result.error) accountMsg = result.error.message;
+    else if (create && !result.data.session) accountMsg = "Almost done. Open the confirmation email we sent to " + email + ", tap the link, then come back here and sign in.";
+    else accountMsg = "";
+  } catch (e) { accountMsg = "Could not reach the sign-in service. Check your connection and try again."; }
+  if (atHome) showHome();
+}
+
+function accountPanel() {
+  if (!sb) return null;
+  if (account) {
+    return el("section", { class: "panel row spread" },
+      el("div", null, el("div", { class: "label" }, "Signed in"), el("div", { class: "wrap" }, account)),
+      el("button", { class: "btn small", onclick: () => { accountMsg = ""; sb.auth.signOut(); } }, "Sign out"));
+  }
+  return el("section", { class: "panel" },
+    el("form", { class: "stack", onsubmit: e => { e.preventDefault(); signIn(false); } },
+      el("h2", null, "Sign in to save your progress"),
+      el("p", { class: "sub" }, "With an account, your progress is the same on your phone and your computer."),
+      el("label", { class: "field" }, el("span", null, "Email"),
+        el("input", { id: "acct-email", type: "email", autocomplete: "email", required: true, value: draftEmail })),
+      el("label", { class: "field" }, el("span", null, "Password"),
+        el("input", { id: "acct-pass", type: "password", autocomplete: "current-password", required: true, minlength: "8" })),
+      el("div", { class: "row" },
+        el("button", { class: "btn primary", type: "submit" }, "Sign in"),
+        el("button", { class: "btn", type: "button", onclick: () => signIn(true) }, "Create account")),
+      accountMsg && el("p", { class: "sub", role: "status" }, accountMsg)));
+}
+
+const cardOf    = q => state.cards[q.id];
+const isNew     = q => !cardOf(q);
+const isDue     = q => !!cardOf(q) && cardOf(q).due <= today();
+const isLearned = q => !!cardOf(q) && cardOf(q).box >= LEARNED_BOX;
+const newLeftToday = () => Math.max(0, NEW_PER_DAY - (state.newDay === today() ? state.newToday : 0));
+const streakNow = () => (state.lastDay !== null && state.lastDay >= today() - 1) ? state.streak : 0;
+
+// Record an answer and schedule the question's next review.
+function grade(q, correct) {
+  const t = today();
+  const card = cardOf(q);
+
+  if (!card) {
+    if (state.newDay !== t) { state.newDay = t; state.newToday = 0; }
+    state.newToday++;
+    state.cards[q.id] = { box: correct ? 1 : 0, due: t + 1, t: Date.now() };
+  } else if (!correct) {
+    card.box = 0;
+    card.due = t + 1;
+    card.t = Date.now();
+  } else if (card.due <= t) {
+    card.box = Math.min(card.box + 1, GAP_DAYS.length - 1);
+    card.due = t + GAP_DAYS[card.box];
+    card.t = Date.now();
+  }
+  // A correct answer before the question is due changes nothing: practicing early is fine,
+  // but it does not prove you remembered it after the gap.
+
+  if (state.lastDay !== t) {
+    state.streak = state.lastDay === t - 1 ? state.streak + 1 : 1;
+    state.lastDay = t;
+  }
+  save();
+}
+
+function inDays(n) { return n <= 0 ? "today" : n === 1 ? "tomorrow" : "in " + n + " days"; }
+
+const app = document.getElementById("app");
+
+// Small helper that builds an HTML element: el("p", { class: "sub" }, "text")
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const key in (attrs || {})) {
+    const value = attrs[key];
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else if (key === "style") node.style.cssText = value;
+    else if (value === true) node.setAttribute(key, "");
+    else if (value !== false && value != null) node.setAttribute(key, value);
+  }
+  children.flat().forEach(child => {
+    if (child == null || child === false) return;
+    node.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+  });
+  return node;
+}
+function show(...nodes) { app.replaceChildren(...nodes.flat().filter(Boolean)); window.scrollTo(0, 0); }
+function shuffle(list) {
+  const copy = list.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+const domainById = id => DOMAINS.find(d => d.id === id);
+const inCore = core => QUESTIONS.filter(q => domainById(q.domain).core === core);
+const link = (text, href) => el("a", { href, target: "_blank", rel: "noopener" }, text);
+
+// Two links for digging deeper into a question's topic. Both open a search, so they always work.
+function learnMore(topic) {
+  return el("div", { class: "more" },
+    el("span", { class: "label" }, "Learn more: " + topic),
+    el("div", { class: "row" },
+      link("Read about it on Wikipedia", "https://en.wikipedia.org/w/index.php?search=" + encodeURIComponent(topic)),
+      link("Find a video on YouTube", "https://www.youtube.com/results?search_query=" + encodeURIComponent("CompTIA A+ " + topic))));
+}
+
+// Today's session: everything that is due, then a few new questions.
+function todaysSession() {
+  const due = shuffle(QUESTIONS.filter(isDue));
+  const fresh = shuffle(QUESTIONS.filter(isNew)).slice(0, newLeftToday());
+  return { due, fresh, list: due.concat(fresh) };
+}
+
+// Practice by topic: due questions first, then new ones, then the rest.
+function pick(list, limit) {
+  const due   = shuffle(list.filter(isDue));
+  const fresh = shuffle(list.filter(isNew));
+  const rest  = shuffle(list.filter(q => !isNew(q) && !isDue(q)));
+  return shuffle(due.concat(fresh, rest).slice(0, limit));
+}
+
+/* ----- Home screen ----- */
+let confirmingReset = false;
+
+function showHome() {
+  onKey = null;
+  atHome = true;
+  const session = todaysSession();
+  const learned = QUESTIONS.filter(isLearned).length;
+  const streak = streakNow();
+  const freshLeft = QUESTIONS.filter(isNew).length;
+
+  // Work out when the next review falls due, for the "all caught up" message.
+  const upcoming = QUESTIONS.filter(q => cardOf(q) && cardOf(q).due > today()).map(q => cardOf(q).due);
+  const nextDue = upcoming.length ? Math.min(...upcoming) : null;
+
+  const summary = el("div", { class: "panel summary" },
+    el("div", null, el("b", null, String(session.due.length)), el("span", { class: "sub" }, "due for review")),
+    el("div", null, el("b", null, learned + "/" + QUESTIONS.length), el("span", { class: "sub" }, "learned")),
+    el("div", null, el("b", null, String(streak)), el("span", { class: "sub" }, streak === 1 ? "day in a row" : "days in a row"))
+  );
+
+  let todayPanel;
+  if (session.list.length) {
+    todayPanel = el("section", { class: "panel stack" },
+      el("h2", null, "Today's session"),
+      el("p", { class: "sub" }, session.due.length + " to review and " + session.fresh.length + " new. Anything you miss comes back later in the session, and again tomorrow."),
+      el("div", { class: "row" },
+        el("button", { class: "btn primary", onclick: () => startQuiz(session.list, "Today's session") }, "Start, " + session.list.length + " questions")));
+  } else {
+    todayPanel = el("section", { class: "panel stack" },
+      el("h2", null, "You are done for today"),
+      el("p", { class: "sub" }, nextDue !== null
+        ? "Your next review is " + inDays(nextDue - today()) + ", with " + upcoming.filter(d => d === nextDue).length + " questions. Coming back then is what moves them into long-term memory."
+        : "Nothing is scheduled yet."),
+      freshLeft > 0 && el("div", { class: "row" },
+        el("button", { class: "btn", onclick: () => startQuiz(shuffle(QUESTIONS.filter(isNew)).slice(0, NEW_PER_DAY), "Extra new questions") }, "Learn " + Math.min(NEW_PER_DAY, freshLeft) + " more new questions")));
+  }
+
+  const options = el("div", { class: "row" },
+    el("button", { class: "btn", onclick: () => showCards("All", 0) }, "Flashcards"),
+    el("button", { class: "btn", onclick: showResources }, "Study links"),
+    el("button", { class: "btn", onclick: showHow }, "How this works"));
+
+  const recall = el("label", { class: "check" },
+    el("input", { type: "checkbox", id: "recall-first", checked: state.recallFirst,
+      onchange: e => { state.recallFirst = e.target.checked; save(); } }),
+    el("span", null, "Hide the choices until I have thought of an answer ",
+      el("span", { class: "sub" }, "(harder, and better for memory)")));
+
+  const exams = EXAMS.map(exam => {
+    const list = inCore(exam.core);
+    return el("section", { class: "panel" },
+      el("div", { class: "exam-head" },
+        el("h2", null, exam.name + " ", el("span", { class: "num sub" }, exam.code)),
+        el("button", { class: "btn small", onclick: () => startQuiz(pick(list, 15), exam.name + " practice") }, "Practice " + exam.name)),
+      el("p", { class: "sub", style: "margin: 4px 0 14px" }, "Up to 90 questions in 90 minutes. Pass mark " + exam.pass + " out of 900."),
+      DOMAINS.filter(d => d.core === exam.core).map(d => {
+        const qs = QUESTIONS.filter(q => q.domain === d.id);
+        const done = qs.filter(isLearned).length;
+        const going = qs.filter(q => cardOf(q) && !isLearned(q)).length;
+        return el("div", { class: "domain" },
+          el("div", null,
+            el("div", null, d.name),
+            el("div", { class: "meta" }, d.weight + "% of the exam · " + done + " learned, " + going + " in progress, " + (qs.length - done - going) + " new")),
+          el("button", { class: "btn small", onclick: () => startQuiz(pick(qs, 10), d.name) }, "Practice"),
+          el("div", { class: "bar" },
+            el("i", { style: "width:" + (done / qs.length * 100) + "%" }),
+            el("i", { class: "going", style: "width:" + (going / qs.length * 100) + "%" })));
+      }));
+  });
+
+  const reset = confirmingReset
+    ? el("div", { class: "row" },
+        el("span", { class: "sub" }, "Erase all saved progress?"),
+        el("button", { class: "btn small", onclick: () => {
+          state.cards = {}; state.streak = 0; state.lastDay = null; state.newDay = null; state.newToday = 0;
+          state.resetAt = Date.now();
+          save(); confirmingReset = false; showHome(); } }, "Yes, erase"),
+        el("button", { class: "btn small", onclick: () => { confirmingReset = false; showHome(); } }, "Cancel"))
+    : el("button", { class: "link", onclick: () => { confirmingReset = true; showHome(); } }, "Reset progress");
+
+  show(
+    el("header", { class: "stack" },
+      el("p", { class: "label" }, "CompTIA A+ · V15"),
+      el("h1", null, "A+ Study Guide"),
+      el("p", { class: "sub" }, QUESTIONS.length + " practice questions across all nine exam domains. Do the daily session and the app brings each question back just before you would forget it.")),
+    summary, todayPanel, options, recall, accountPanel(), ...exams,
+    el("p", { class: "note" }, "These are original practice questions written for study, not questions from the real exam."),
+    (saveNote = el("p", { class: "note" }, saveMessage())),
+    reset
+  );
+}
+
+/* ----- Quiz ----- */
+let quiz = null;    // the session in progress
+let onKey = null;   // what the keyboard does on the current screen
+
+// One question as it appears in a session. Choices are shuffled; the right one is remembered by its text.
+function makeItem(q, retry) {
+  return { q, choices: shuffle(q.choices), answer: q.choices[q.correct], picked: null, retry, revealed: false, nextDue: null };
+}
+
+function startQuiz(list, title) {
+  if (!list.length) return;
+  quiz = { title, items: list.map(q => makeItem(q, false)), at: 0 };
+  showQuestion();
+}
+
+function showQuestion() {
+  atHome = false;
+  const item = quiz.items[quiz.at], q = item.q, answered = item.picked !== null;
+  const last = quiz.at === quiz.items.length - 1;
+  const hidden = state.recallFirst && !item.revealed && !answered;
+
+  const choose = choice => {
+    if (item.picked !== null) return;
+    item.picked = choice;
+    const correct = choice === item.answer;
+    if (!item.retry) {            // only your first try at a question counts toward the schedule
+      grade(q, correct);
+      item.nextDue = cardOf(q).due - today();
+    }
+    // Missed it? Put it back at the end of this session, up to two more times.
+    const tries = quiz.items.filter(i => i.q === q).length;
+    if (!correct && tries < 3) quiz.items.push(makeItem(q, true));
+    showQuestion();
+  };
+  const next = () => { if (last) showResults(); else { quiz.at++; showQuestion(); } };
+  const reveal = () => { item.revealed = true; showQuestion(); };
+
+  const buttons = item.choices.map((choice, i) => {
+    let cls = "choice";
+    if (answered && choice === item.answer) cls += " right";
+    else if (answered && choice === item.picked) cls += " wrong";
+    return el("button", { class: cls, disabled: answered, onclick: () => choose(choice) },
+      el("span", { class: "key" }, String(i + 1)), el("span", null, choice));
+  });
+
+  const right = item.picked === item.answer;
+  onKey = e => {
+    const n = Number(e.key);
+    if (hidden) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); reveal(); } }
+    else if (!answered && n >= 1 && n <= item.choices.length) choose(item.choices[n - 1]);
+    else if (answered && e.key === "Enter") { e.preventDefault(); next(); }
+  };
+
+  show(
+    el("div", { class: "row spread" },
+      el("p", { class: "label" }, "Question " + (quiz.at + 1) + " of " + quiz.items.length + " · " + domainById(q.domain).name),
+      el("button", { class: "link", onclick: showHome }, "Quit")),
+    item.retry && el("p", { class: "tag" }, "You missed this one earlier. Try it again."),
+    el("p", { class: "question" }, q.text),
+    hidden
+      ? el("div", { class: "panel stack" },
+          el("p", null, "Say your answer out loud or in your head before you look."),
+          el("div", { class: "row" }, el("button", { class: "btn primary", onclick: reveal }, "Show the choices")))
+      : el("div", { class: "stack" }, buttons),
+    answered && el("div", { class: "panel stack" },
+      el("p", { class: "verdict " + (right ? "right" : "wrong") }, right ? "Correct" : "Not quite. The answer is: " + item.answer),
+      el("p", null, q.explanation),
+      item.nextDue !== null && el("p", { class: "sub" }, "You will see this again " + inDays(item.nextDue) + "."),
+      learnMore(q.topic)),
+    answered && el("div", { class: "row" },
+      el("button", { class: "btn primary", onclick: next }, last ? "See results" : "Next question")),
+    el("p", { class: "note" }, hidden ? "Keyboard: Enter shows the choices." : "Keyboard: press 1 to 4 to answer, Enter for the next question.")
+  );
+}
+
+function showResults() {
+  atHome = false;
+  onKey = null;
+  const firsts = quiz.items.filter(i => !i.retry);          // score first tries only
+  const right = firsts.filter(i => i.picked === i.answer).length;
+  const wrong = firsts.filter(i => i.picked !== i.answer);
+
+  const byDomain = DOMAINS.map(d => {
+    const mine = firsts.filter(i => i.q.domain === d.id);
+    return mine.length ? { d, total: mine.length, right: mine.filter(i => i.picked === i.answer).length } : null;
+  }).filter(Boolean);
+
+  show(
+    el("header", { class: "stack" },
+      el("p", { class: "label" }, quiz.title + " · finished"),
+      el("h1", null, right + " of " + firsts.length + " right on the first try"),
+      el("p", { class: "sub" }, wrong.length
+        ? "The " + wrong.length + " you missed are scheduled for tomorrow. The rest come back after longer gaps."
+        : "Nothing missed. These questions come back after longer gaps to check they have stuck.")),
+    byDomain.length > 1 && el("section", { class: "panel" },
+      el("h2", null, "By domain"),
+      byDomain.map(r => el("div", { class: "domain" },
+        el("div", null, r.d.name), el("div", { class: "num" }, r.right + " / " + r.total),
+        el("div", { class: "bar" }, el("i", { style: "width:" + (r.right / r.total * 100) + "%" }))))),
+    wrong.length > 0 && el("section", { class: "panel" },
+      el("h2", null, "Study these before tomorrow"),
+      wrong.map(i => el("div", { class: "missed stack" },
+        el("div", null, i.q.text),
+        el("div", { class: "ans" }, i.answer),
+        el("div", { class: "sub" }, i.q.explanation),
+        learnMore(i.q.topic)))),
+    el("div", { class: "row" }, el("button", { class: "btn primary", onclick: showHome }, "Back to home"))
+  );
+}
+
+/* ----- Study links and the explanation of the method ----- */
+function showResources() {
+  atHome = false;
+  onKey = null;
+  show(
+    el("div", { class: "row spread" },
+      el("p", { class: "label" }, "Study links"),
+      el("button", { class: "link", onclick: showHome }, "Back to home")),
+    el("h1", null, "Where to learn the material"),
+    el("p", { class: "sub" }, "This app is for remembering. Use these to learn a topic properly the first time, then let the daily session keep it in your head."),
+    RESOURCES.map(group => el("section", { class: "panel" },
+      el("h2", null, group.group),
+      group.items.map(item => el("div", { class: "missed stack" },
+        link(item[0], item[1]),
+        el("div", { class: "sub" }, item[2]))))),
+    el("p", { class: "note" }, "After each question you answer, the app also offers a Wikipedia and a YouTube search for that question's topic.")
+  );
+}
+
+function showHow() {
+  atHome = false;
+  onKey = null;
+  const steps = [
+    ["Do the daily session", "It holds every question that is due, plus " + NEW_PER_DAY + " new ones. It takes about ten minutes."],
+    ["Missed questions come back fast", "A miss returns later in the same session, and again tomorrow."],
+    ["Right answers come back slowly", "Each time you get a due question right, the gap grows: 1 day, then 3, 7, 14 and 30."],
+    ["Learned means it lasted", "A question counts as learned after you have remembered it on three separate days."]
+  ];
+  show(
+    el("div", { class: "row spread" },
+      el("p", { class: "label" }, "How this works"),
+      el("button", { class: "link", onclick: showHome }, "Back to home")),
+    el("h1", null, "Remembering it tomorrow, not just today"),
+    el("p", { class: "sub" }, "Getting an answer right five minutes after seeing it proves very little. Memory sticks when you have to pull the answer back out after a gap, just as it is starting to fade. This app schedules that for you."),
+    el("section", { class: "panel" }, steps.map(s => el("div", { class: "missed stack" },
+      el("div", { class: "strong" }, s[0]), el("div", { class: "sub" }, s[1])))),
+    el("p", { class: "sub" }, "Two habits make the biggest difference: come back every day, even for five minutes, and turn on the option that hides the choices so you recall the answer instead of recognizing it.")
+  );
+}
+
+/* ----- Flashcards ----- */
+let deckOrder = [], deckName = null, flipped = false;
+
+function showCards(name, at) {
+  atHome = false;
+  if (name !== deckName) {   // a different deck was chosen, so build and shuffle it
+    deckName = name;
+    deckOrder = shuffle(CARDS.filter(c => name === "All" || c[0] === name));
+    at = 0;
+    flipped = false;
+  }
+  const card = deckOrder[at];
+  const go = step => { flipped = false; showCards(name, (at + step + deckOrder.length) % deckOrder.length); };
+  const flip = () => { flipped = !flipped; showCards(name, at); };
+
+  onKey = e => {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+    else if (e.key === "ArrowRight") go(1);
+    else if (e.key === "ArrowLeft") go(-1);
+  };
+
+  show(
+    el("div", { class: "row spread" },
+      el("p", { class: "label" }, "Flashcards · " + (at + 1) + " of " + deckOrder.length),
+      el("button", { class: "link", onclick: showHome }, "Back to home")),
+    el("div", { class: "row" }, ["All", "Ports", "Acronyms", "Commands"].map(n =>
+      el("button", { class: "chip" + (n === name ? " on" : ""), onclick: () => showCards(n, 0) }, n))),
+    el("button", { class: "card" + (flipped ? " back" : ""), onclick: flip },
+      el("span", { class: "label" }, flipped ? "Answer" : card[0]),
+      el("span", { class: "face" + (flipped ? "" : " num") }, flipped ? card[2] : card[1])),
+    el("div", { class: "row" },
+      el("button", { class: "btn", onclick: () => go(-1) }, "Previous"),
+      el("button", { class: "btn primary", onclick: flip }, flipped ? "Show front" : "Show answer"),
+      el("button", { class: "btn", onclick: () => go(1) }, "Next")),
+    el("p", { class: "note" }, "Keyboard: Space flips the card, the arrow keys move between cards.")
+  );
+}
+
+document.addEventListener("keydown", e => { if (onKey) onKey(e); });
+
+// Start on the home screen, then connect to the account in the background.
+showHome();
+cloudStart();
+</script>
+
+<script>
+  // The service worker (sw.js) keeps a copy of the app on the device so it opens without a connection.
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+</script>
+</body>
+</html>
