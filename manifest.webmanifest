@@ -1,7 +1,7 @@
 {
-  "name": "A+ Study Guide",
-  "short_name": "A+ Study",
-  "description": "CompTIA A+ practice with daily spaced-repetition review.",
+  "name": "CompTIA Study Guide",
+  "short_name": "CompTIA Study",
+  "description": "CompTIA Security+ and A+ practice with daily spaced-repetition review.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

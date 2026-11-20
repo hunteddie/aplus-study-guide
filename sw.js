@@ -3,7 +3,7 @@
 // it keeps a copy of the app's own files, and serves that copy when there is no connection.
 // Strategy: try the network first so updates arrive straight away, and fall back to the saved copy.
 
-const CACHE = "aplus-study-v1";
+const CACHE = "aplus-study-v2";
 const FILES = ["./", "index.html", "config.js", "lib/supabase.js", "manifest.webmanifest",
                "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 

@@ -10,11 +10,11 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="A+ Study">
+<meta name="apple-mobile-web-app-title" content="CompTIA Study">
 <meta name="theme-color" content="#F2F4F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1720" media="(prefers-color-scheme: dark)">
 
-<title>A+ Study Guide</title>
+<title>CompTIA Study Guide</title>
 
 <style>
   /* Layout: one centered column. Home leads with today's session, then the two exams and their domains; a quiz, flashcard deck or info page replaces it. */
@@ -129,19 +129,29 @@
 
 <script>
 /* =====================================================================
-   A+ STUDY GUIDE
-   The file has four parts, in this order:
-     1. EXAM FACTS     the two exams and their domains
+   COMPTIA STUDY GUIDE (A+ and Security+)
+   The file has five parts, in this order:
+     1. EXAM FACTS     the exams, their domains, and the two study tracks
      2. QUESTION BANK  every practice question   <- add your own here
      3. FLASHCARDS     ports, acronyms, commands <- and here
      4. STUDY LINKS    the resources page
      5. THE APP        the review schedule and the code that runs the screens
    ===================================================================== */
 
-/* ---------- 1. EXAM FACTS (from CompTIA's exam pages, A+ V15) ---------- */
+/* ---------- 1. EXAM FACTS (from CompTIA's exam pages: A+ V15, Security+ SY0-701) ---------- */
+
+// A track is one certification. The switch at the top of the home screen picks which one you study.
+// Each track lists its own flashcard decks, and the word added to "Learn more" video searches.
+const TRACKS = {
+  secplus: { label: "Security+", title: "Security+ Study Guide", tag: "CompTIA Security+ · SY0-701",
+             decks: ["Security acronyms", "Attacks", "Secure ports", "Risk math"], search: "CompTIA Security+" },
+  aplus:   { label: "A+", title: "A+ Study Guide", tag: "CompTIA A+ · V15",
+             decks: ["Ports", "Acronyms", "Commands"], search: "CompTIA A+" }
+};
 const EXAMS = [
-  { core: 1, name: "Core 1", code: "220-1201", pass: 675 },
-  { core: 2, name: "Core 2", code: "220-1202", pass: 700 }
+  { core: 1, track: "aplus",   name: "Core 1",    code: "220-1201", pass: 675 },
+  { core: 2, track: "aplus",   name: "Core 2",    code: "220-1202", pass: 700 },
+  { core: 3, track: "secplus", name: "Security+", code: "SY0-701",  pass: 750 }
 ];
 const DOMAINS = [
   { id: "mob",  core: 1, name: "Mobile Devices",                       weight: 13 },
@@ -152,7 +162,12 @@ const DOMAINS = [
   { id: "os",   core: 2, name: "Operating Systems",                    weight: 28 },
   { id: "sec",  core: 2, name: "Security",                             weight: 28 },
   { id: "sts",  core: 2, name: "Software Troubleshooting",             weight: 23 },
-  { id: "ops",  core: 2, name: "Operational Procedures",               weight: 21 }
+  { id: "ops",  core: 2, name: "Operational Procedures",               weight: 21 },
+  { id: "gsc",    core: 3, name: "General Security Concepts",                  weight: 12 },
+  { id: "thr",    core: 3, name: "Threats, Vulnerabilities and Mitigations",   weight: 22 },
+  { id: "arch",   core: 3, name: "Security Architecture",                      weight: 18 },
+  { id: "secops", core: 3, name: "Security Operations",                        weight: 28 },
+  { id: "prog",   core: 3, name: "Security Program Management and Oversight",  weight: 20 }
 ];
 
 /* ---------- 2. QUESTION BANK ----------
@@ -353,6 +368,122 @@ add("ops", "While repairing a PC, you find files that appear to be illegal. What
 add("ops", "A shop's point-of-sale system stores customers' credit card numbers. Which standard governs how that data must be protected?", ["PCI DSS", "GDPR", "HIPAA", "An end-user license agreement"], 0, "PCI DSS is the payment card industry's security standard. HIPAA covers health information, and GDPR covers the personal data of people in the European Union.", "PCI DSS");
 add("ops", "You are running 30 minutes late for an on-site appointment with a customer. What is the professional thing to do?", ["Arrive late and apologize then", "Contact the customer now to tell them", "Reschedule without telling them", "Skip the appointment"], 1, "Communicate early and set expectations. Customers accept a delay far more readily than a missed appointment they were not warned about.", "Customer service");
 
+/* ===== SECURITY+ (SY0-701) ===== */
+
+// 1. General Security Concepts
+add("gsc", "A company posts signs saying \"This area is under video surveillance.\" What type of control is the sign itself?", ["Deterrent", "Corrective", "Compensating", "Detective"], 0, "The sign discourages someone from trying in the first place, which makes it a deterrent. The camera's recording would be detective, because it records what happened.", "Security control types");
+add("gsc", "Which control category does a written information security policy belong to?", ["Technical", "Physical", "Managerial", "Operational"], 2, "Managerial (administrative) controls are policies, risk assessments and planning. Operational controls are carried out by people, such as guards and awareness training. Technical controls are carried out by systems, such as firewalls.", "Administrative controls");
+add("gsc", "An attacker floods a web server with traffic so customers cannot reach it. Which part of the CIA triad is affected?", ["Confidentiality", "Integrity", "Availability", "Non-repudiation"], 2, "Availability means systems and data are there when authorized users need them. A denial-of-service attack targets availability without necessarily reading or changing any data.", "CIA triad");
+add("gsc", "Which action gives non-repudiation for an email, proving the sender cannot deny sending it?", ["Encrypting it with the recipient's public key", "Digitally signing it with the sender's private key", "Hashing it without a key", "Sending it over TLS"], 1, "Only the sender holds their private key, so a valid signature proves they sent the message and that it was not changed. Encrypting with the recipient's public key gives confidentiality, not proof of origin.", "Non-repudiation");
+add("gsc", "After a user signs in, the system checks whether that user may open the payroll folder. Which step of AAA is this?", ["Authentication", "Authorization", "Accounting", "Identification"], 1, "Authentication proves who you are. Authorization decides what you may do once you are known. Accounting records what you did.", "AAA security");
+add("gsc", "In a zero trust architecture, which component makes the decision to allow or deny a request?", ["Policy enforcement point", "Policy engine", "Implicit trust zone", "Subject"], 1, "The policy engine decides, the policy administrator passes that decision on, and the policy enforcement point carries it out by opening or closing the connection. Together the engine and administrator form the policy decision point.", "Zero trust architecture");
+add("gsc", "A security team puts a fake file named passwords.xlsx on a file server and raises an alert if anyone opens it. What is this?", ["Honeynet", "Honeyfile", "DNS sinkhole", "Honeypot"], 1, "A honeyfile is a decoy file that nobody has a legitimate reason to open, so any access is suspicious. A honeypot is a whole decoy system and a honeynet is a network of them.", "Honeyfile deception technology");
+add("gsc", "Comparing current security controls against a framework's requirements to find what is missing is called what?", ["Penetration test", "Gap analysis", "Risk transfer", "Tabletop exercise"], 1, "A gap analysis measures where you are against where a standard (such as NIST CSF or ISO 27001) says you should be, and lists the gaps to close.", "Gap analysis");
+add("gsc", "Before a firewall change, the team writes down exactly how to undo it if something breaks. What is this called?", ["Impact analysis", "Maintenance window", "Backout plan", "Allow list"], 2, "A backout plan is the documented way to roll a change back. Change management requires it before approval, alongside the impact analysis and a scheduled maintenance window.", "Backout plan change management");
+add("gsc", "Which of these encryption algorithms is symmetric, using the same key to encrypt and decrypt?", ["RSA", "ECC", "AES", "Diffie-Hellman"], 2, "AES is symmetric and fast, so it encrypts bulk data. RSA and ECC are asymmetric (a public and private key pair). Diffie-Hellman is a key exchange method, not a bulk cipher.", "Advanced Encryption Standard");
+add("gsc", "Which statement about hashing is true?", ["A hash can be decrypted with the right key", "The same input always produces the same fixed-length output", "Hashing keeps data confidential", "A SHA-256 hash gets longer as the input gets longer"], 1, "A hash is a one-way, fixed-length fingerprint. Change one bit of the input and the hash changes completely, which is why hashes check integrity. They cannot be reversed or decrypted.", "Cryptographic hash function");
+add("gsc", "Why is a random salt added to each password before it is hashed?", ["To make the hash reversible", "So identical passwords produce different hashes, which defeats precomputed rainbow tables", "To encrypt the password in transit", "To make the hash shorter"], 1, "Without a salt, every user with the password Summer2026! has the same hash, and attackers can look hashes up in precomputed tables. A unique salt per user makes every hash different.", "Salt cryptography");
+add("gsc", "A browser checks whether a website's certificate has been revoked by asking the certificate authority in real time. Which protocol is this?", ["CRL", "OCSP", "CSR", "PEM"], 1, "OCSP (Online Certificate Status Protocol) asks about one certificate in real time. A CRL is a full list of revoked certificates downloaded periodically. A CSR is a request for a new certificate.", "Online Certificate Status Protocol");
+add("gsc", "Which hardware device securely generates and stores cryptographic keys for many servers in a data center?", ["TPM", "HSM", "Secure enclave", "Key stretcher"], 1, "A hardware security module (HSM) is a dedicated, tamper-resistant device that serves many systems. A TPM is a chip built into a single computer.", "Hardware security module");
+add("gsc", "One certificate must secure www.example.com, mail.example.com and shop.example.com. What is the simplest choice?", ["A self-signed certificate", "A wildcard certificate for *.example.com", "A root certificate", "A code-signing certificate"], 1, "A wildcard certificate covers every subdomain at one level. A SAN certificate, which lists each name, would also work. Self-signed certificates are not trusted by browsers.", "Wildcard certificate");
+add("gsc", "Hiding a message inside an ordinary image file is called what?", ["Tokenization", "Steganography", "Data masking", "Hashing"], 1, "Steganography hides the fact that a message exists at all, for example inside an image or audio file. It is a form of obfuscation, not encryption.", "Steganography");
+add("gsc", "A payment system replaces card numbers with random values and keeps the real numbers in a secure vault. What is this technique?", ["Tokenization", "Hashing", "Salting", "Steganography"], 0, "Tokenization swaps sensitive data for a meaningless token. The token is useless if stolen because only the vault can map it back to the real card number.", "Tokenization data security");
+
+// 2. Threats, Vulnerabilities and Mitigations
+add("thr", "Which threat actor is most likely motivated by a political or social cause?", ["Hacktivist", "Nation-state", "Organized crime", "Unskilled attacker"], 0, "Hacktivists attack to promote a cause, often by defacing sites or leaking data. Organized crime is usually after money, and nation-states pursue espionage or strategic goals.", "Hacktivism");
+add("thr", "An employee starts using an unapproved cloud file-sharing app to get work done faster. What is this?", ["A malicious insider", "Shadow IT", "A supply chain attack", "A watering hole attack"], 1, "Shadow IT is technology used without IT's approval. The intent is usually innocent, but the organization cannot secure or monitor what it does not know about.", "Shadow IT");
+add("thr", "A text message claims to be from the user's bank and asks them to tap a link to verify their account. What is this?", ["Vishing", "Smishing", "Whaling", "Pharming"], 1, "Smishing is phishing by SMS text message. Vishing uses voice calls, and whaling targets senior executives.", "SMS phishing");
+add("thr", "Attackers compromise a website that a target company's engineers visit often, hoping to infect them. What is this attack?", ["Watering hole attack", "Typosquatting", "Pretexting", "Brand impersonation"], 0, "Like a predator waiting at a watering hole, the attacker infects a site the victims already trust and visit, instead of attacking them directly.", "Watering hole attack");
+add("thr", "An email that appears to come from the CFO asks accounts payable to urgently wire money to a new vendor account. What should the clerk do first?", ["Send the wire because the CFO asked", "Reply to the email to ask if it is real", "Verify the request through a known phone number or another separate channel", "Forward it to all staff"], 2, "This is business email compromise. Replying goes to the attacker. Confirm through a channel you already trust. Urgency and a new payment account are classic warning signs.", "Business email compromise");
+add("thr", "A web form passes user input straight into a database query. An attacker types ' OR 1=1 -- into the form. What attack is this?", ["Cross-site scripting", "SQL injection", "Cross-site request forgery", "Directory traversal"], 1, "The input changes the logic of the SQL query so it returns every row. The fix is parameterized queries (prepared statements) plus input validation.", "SQL injection");
+add("thr", "An attacker posts a forum comment containing a script that then runs in the browser of everyone who views the page. What is this?", ["Stored cross-site scripting", "SQL injection", "Buffer overflow", "Replay attack"], 0, "Stored (persistent) XSS saves the script on the server, so it runs for every visitor. Reflected XSS bounces the script off a single crafted link instead.", "Cross-site scripting");
+add("thr", "A program writes more data into a memory area than it was built to hold, overwriting neighboring memory. What vulnerability is this?", ["Race condition", "Memory leak", "Buffer overflow", "Directory traversal"], 2, "A buffer overflow can overwrite memory the program relies on, and attackers can use it to run their own code. Bounds checking and memory-safe languages prevent it.", "Buffer overflow");
+add("thr", "A program checks a file's permissions, then opens the file a moment later. An attacker swaps in a different file in between. What is this?", ["A time-of-check to time-of-use race condition", "SQL injection", "Side loading", "A replay attack"], 0, "TOCTOU is a race condition: the situation changes between when something is checked and when it is used.", "Time-of-check to time-of-use");
+add("thr", "A vulnerability that the vendor does not yet know about, and for which no patch exists, is called what?", ["Legacy", "Zero-day", "End-of-life", "Misconfiguration"], 1, "Zero-day means the defenders have had zero days to fix it. Behavior-based tools such as EDR help, because signature-based tools have nothing to match.", "Zero-day vulnerability");
+add("thr", "Attackers insert malicious code into a software vendor's update, and customers then install it. What attack is this?", ["Supply chain attack", "Watering hole attack", "On-path attack", "Brute force attack"], 0, "A supply chain attack compromises a trusted supplier so the malicious code arrives through a trusted channel. Vendor risk management and verifying code signatures reduce the risk.", "Supply chain attack");
+add("thr", "Malware that hides deep in the operating system, often the kernel, to conceal itself and other malicious activity is a what?", ["Worm", "Rootkit", "Keylogger", "Logic bomb"], 1, "Rootkits change the operating system so normal tools cannot see them. Secure Boot and measured boot help prevent them, and reimaging is often the only reliable fix.", "Rootkit");
+add("thr", "Which type of malware spreads across a network on its own, without any user action?", ["Trojan", "Worm", "Spyware", "Logic bomb"], 1, "Worms copy themselves from system to system through vulnerabilities. A Trojan needs a user to run it because it is disguised as legitimate software.", "Computer worm");
+add("thr", "An administrator hides code that will delete files if his account is ever disabled. What is this?", ["Rootkit", "Bloatware", "Logic bomb", "Virus"], 2, "A logic bomb waits for a trigger, such as a date or an event, then runs its payload. Code review and separation of duties help catch them.", "Logic bomb");
+add("thr", "Logs show one or two sign-in attempts against thousands of different accounts, all using the password Winter2026!. What attack is this?", ["Brute force", "Password spraying", "Rainbow table", "Pass-the-hash"], 1, "Password spraying tries a few common passwords across many accounts to stay under the lockout limit. Brute force tries many passwords against a single account.", "Password spraying");
+add("thr", "On a coffee shop's Wi-Fi, an attacker secretly intercepts and relays traffic between a victim and a website. What is this?", ["On-path attack", "DDoS", "Bluejacking", "Pass-the-hash"], 0, "In an on-path (man-in-the-middle) attack, the attacker sits between the two parties and can read or change traffic. TLS with certificate checking and VPNs protect against it.", "Man-in-the-middle attack");
+add("thr", "An attacker forces a connection to fall back from TLS 1.3 to an older, weaker protocol version. What is this?", ["Downgrade attack", "Collision attack", "Birthday attack", "Replay attack"], 0, "A downgrade attack pushes both sides onto a weaker protocol the attacker can break. Disabling old protocol versions on servers prevents it.", "Downgrade attack");
+add("thr", "Logs show a user signed in from New York and from Singapore ten minutes apart. Which indicator of compromise is this?", ["Impossible travel", "Resource consumption", "Account lockout", "Missing logs"], 0, "No one can travel that far in ten minutes, so one of the sign-ins is almost certainly using stolen credentials.", "Impossible travel");
+add("thr", "Which mitigation best limits how far an attacker can move after compromising a single workstation?", ["Network segmentation", "Longer passwords", "Turning off logging", "Installing a second browser"], 0, "Segmentation splits the network into zones with controls between them, which limits lateral movement and contains the damage.", "Network segmentation");
+add("thr", "A user only needs to read reports but has full administrator rights. Which principle does this violate?", ["Least privilege", "Defense in depth", "Separation of duties", "Implicit deny"], 0, "Least privilege means giving only the access needed for the job. Extra rights turn a compromised account into a much bigger problem.", "Principle of least privilege");
+add("thr", "Installing a phone app from outside the official app store is called what?", ["Jailbreaking", "Side loading", "Rooting", "Tethering"], 1, "Side loading skips the app store's review, so malicious apps get in more easily. Jailbreaking and rooting remove the operating system's own restrictions.", "Sideloading");
+add("thr", "A cloud storage bucket holding customer records is set to allow public access. What type of vulnerability is this?", ["Misconfiguration", "Zero-day", "Firmware", "Side loading"], 0, "Misconfiguration is one of the most common causes of cloud data breaches. Secure baselines and automated configuration checks catch it.", "Cloud misconfiguration");
+
+// 3. Security Architecture
+add("arch", "In the cloud shared responsibility model for IaaS, who patches the guest operating system?", ["The cloud provider", "The customer", "Both equally", "The hypervisor vendor"], 1, "With IaaS the provider secures the physical data center and the hypervisor. The customer is responsible for everything they install, including the operating system, applications and data.", "Shared responsibility model");
+add("arch", "Defining servers and networks in configuration files so they deploy the same way every time is called what?", ["Infrastructure as code", "Serverless", "Microservices", "SD-WAN"], 0, "Infrastructure as code makes builds repeatable and reviewable, and it reduces configuration drift and human error.", "Infrastructure as code");
+add("arch", "Why are industrial control systems (ICS/SCADA) often hard to secure?", ["They always run the newest operating systems", "They often run legacy systems that cannot easily be patched and must stay available", "They never connect to any network", "They always run in the public cloud"], 1, "Taking a plant or utility offline to patch is costly or dangerous, so these systems are often isolated or segmented instead.", "SCADA security");
+add("arch", "A system is physically isolated, with no network connection to any other network. What is this?", ["Air-gapped", "A screened subnet", "A VLAN", "A jump server"], 0, "An air gap is physical separation. Data can still cross it on removable media, so USB controls still matter.", "Air gap networking");
+add("arch", "Where should a company place its public-facing web server?", ["On the internal LAN", "In a screened subnet (DMZ)", "On the domain controller", "In the management VLAN"], 1, "A screened subnet sits between the internet and the internal network, so a compromised public server does not give direct access to internal systems.", "Screened subnet DMZ");
+add("arch", "Administrators must connect to one hardened server first, then from it reach the sensitive servers. What is that first server?", ["Jump server", "Proxy server", "Load balancer", "Honeypot"], 0, "A jump server (or jump box) is a single, tightly controlled and heavily logged entry point into a secure zone.", "Jump server");
+add("arch", "A firewall fails, and its configuration blocks all traffic until it is fixed. Which failure mode is this?", ["Fail-open", "Fail-closed", "Active/passive", "Inline tap"], 1, "Fail-closed keeps things secure but sacrifices availability. Fail-open keeps traffic flowing but sacrifices security.", "Fail-safe");
+add("arch", "Which device inspects HTTP traffic to block attacks such as SQL injection and XSS against a web application?", ["Web application firewall", "Layer 4 firewall", "Load balancer", "Network tap"], 0, "A WAF works at the application layer and understands web requests. A layer 4 firewall only sees IP addresses and ports.", "Web application firewall");
+add("arch", "Which sensor deployment can actively block malicious traffic as it passes through?", ["An IDS on a SPAN port", "An inline IPS", "A network tap with an IDS", "A SIEM"], 1, "Only an inline device sits in the traffic path, so only it can drop packets. Passive sensors on a SPAN port or tap can alert but cannot block.", "Intrusion prevention system");
+add("arch", "Which IPsec protocol encrypts the packet's payload?", ["AH", "ESP", "IKE", "GRE"], 1, "ESP (Encapsulating Security Payload) gives confidentiality plus integrity. AH (Authentication Header) gives integrity and authentication but no encryption. IKE negotiates the keys.", "Encapsulating Security Payload");
+add("arch", "Which standard requires a device to authenticate before it gets network access on a switch port?", ["802.1X", "802.11ac", "802.3af", "802.1Q"], 0, "802.1X is port-based network access control, usually backed by a RADIUS server. 802.1Q is VLAN tagging, 802.3af is Power over Ethernet and 802.11ac is Wi-Fi.", "IEEE 802.1X");
+add("arch", "Encrypting a laptop's entire drive protects data in which state?", ["In transit", "At rest", "In use", "In motion"], 1, "Full-disk encryption protects stored data if the device is lost or stolen. TLS protects data in transit.", "Data at rest");
+add("arch", "A company must keep EU customers' data in EU data centers because of local law. What concept is this?", ["Data sovereignty", "Data masking", "Tokenization", "Data in use"], 0, "Data sovereignty means data is subject to the laws of the country where it is stored, which drives decisions about where to store it.", "Data sovereignty");
+add("arch", "A help desk screen shows only the last four digits of a customer's card number. What technique is this?", ["Data masking", "Hashing", "Encryption at rest", "Geofencing"], 0, "Masking hides part of the data so staff see only what they need. The full value still exists in the system behind the screen.", "Data masking");
+add("arch", "Which recovery site has power, network and equipment ready, and can take over within minutes or hours?", ["Hot site", "Warm site", "Cold site", "Mobile site"], 0, "A hot site is the fastest and most expensive. A warm site has some equipment and needs time to finish setup. A cold site is little more than space and power.", "Hot site disaster recovery");
+add("arch", "Which backup type copies only what changed since the last backup of any kind, so backups are fastest but restores are slowest?", ["Full", "Differential", "Incremental", "Snapshot"], 2, "Restoring from incrementals needs the last full backup plus every incremental since. A differential needs only the full backup plus the latest differential.", "Incremental backup");
+add("arch", "Two firewalls are paired. One handles all traffic and the other takes over only if the first fails. What setup is this?", ["Active/passive", "Active/active", "Round-robin load balancing", "Cold standby"], 0, "In active/passive, the standby unit waits idle. In active/active, both share the load and either can carry it alone.", "High availability active passive");
+add("arch", "Team members talk through how they would respond to a ransomware scenario in a conference room, without touching any systems. What kind of test is this?", ["Tabletop exercise", "Failover test", "Simulation", "Parallel processing"], 0, "A tabletop exercise is a discussion-based walk-through. It is cheap and finds gaps in plans and roles without any risk to production systems.", "Tabletop exercise");
+add("arch", "Which device keeps servers running on battery for a short time until a generator starts?", ["UPS", "PDU", "Generator", "Surge protector"], 0, "A UPS bridges the gap of seconds to minutes. A generator supplies long-term power, and a PDU just distributes power within a rack.", "Uninterruptible power supply");
+
+// 4. Security Operations
+add("secops", "Which is a standard step when hardening a new server?", ["Disable unused services and close unused ports", "Keep the default admin password for vendor support", "Install every available application", "Turn off logging to save space"], 0, "Hardening shrinks the attack surface. Every service you do not run is one that cannot be attacked.", "System hardening");
+add("secops", "A documented standard configuration that every new workstation is built from is called what?", ["Secure baseline", "Risk register", "Playbook", "Change request"], 0, "A secure baseline sets the approved settings. Systems are deployed from it and later checked against it to catch drift.", "Security baseline");
+add("secops", "Which wireless security standard replaces the pre-shared key handshake with SAE?", ["WEP", "WPA2-Personal", "WPA3", "WPS"], 2, "WPA3 uses Simultaneous Authentication of Equals (SAE), which resists offline password-guessing attacks against captured handshakes.", "WPA3");
+add("secops", "A vulnerability scanner reports a vulnerability that is not actually present. What is this called?", ["False positive", "False negative", "True positive", "Compensating control"], 0, "A false positive is an alarm with nothing behind it. A false negative is worse: a real problem the scan missed.", "False positives and false negatives");
+add("secops", "Which system scores the severity of vulnerabilities from 0 to 10?", ["CVE", "CVSS", "SCAP", "STIX"], 1, "CVSS (Common Vulnerability Scoring System) gives the severity score. CVE gives each known vulnerability its ID number.", "Common Vulnerability Scoring System");
+add("secops", "Why run a credentialed vulnerability scan instead of a non-credentialed one?", ["It signs in, so it sees missing patches and configuration problems an outside scan cannot", "It is faster and hides from the IDS", "It exploits each vulnerability to prove it", "It needs no permission"], 0, "A credentialed scan looks from the inside, like an administrator, which gives far more accurate results. A non-credentialed scan shows what an outside attacker would see.", "Credentialed vulnerability scan");
+add("secops", "A critical legacy system cannot be patched. What is the best approach?", ["Leave it as it is", "Apply compensating controls, such as isolating it on its own network segment", "Turn off all monitoring", "Expose it to the internet"], 1, "When the real fix is not possible, compensating controls reduce the risk another way: segmentation, strict access rules and extra monitoring.", "Compensating controls");
+add("secops", "Which tool collects logs from many sources, correlates events and raises alerts?", ["SIEM", "DLP", "NAC", "MDM"], 0, "A SIEM (security information and event management) is the center of a SOC's monitoring. Correlation links events across systems that look harmless on their own.", "Security information and event management");
+add("secops", "Which tool runs on each endpoint, records behavior and can isolate an infected host from the network?", ["EDR", "WAF", "HSM", "SPF"], 0, "Endpoint detection and response looks at behavior, not just signatures, and lets responders contain a host remotely.", "Endpoint detection and response");
+add("secops", "A system blocks an outgoing email because it contains 20 credit card numbers addressed to someone outside the company. What tool is this?", ["DLP", "IDS", "SOAR", "SIEM"], 0, "Data loss prevention inspects content for sensitive patterns, such as card numbers or SSNs, and blocks it from leaving.", "Data loss prevention");
+add("secops", "Which email authentication record lists the mail servers allowed to send email for a domain?", ["SPF", "DKIM", "DMARC", "MX"], 0, "SPF is a DNS TXT record listing approved senders. DKIM adds a digital signature to each message. An MX record says where mail for the domain is delivered.", "Sender Policy Framework");
+add("secops", "Which standard tells receiving mail servers what to do with mail that fails SPF and DKIM checks, and sends reports back to the domain owner?", ["DMARC", "SPF", "DKIM", "S/MIME"], 0, "DMARC sets the policy (none, quarantine or reject) and turns on reporting. It builds on SPF and DKIM.", "DMARC");
+add("secops", "Which tool raises an alert when critical system files are changed?", ["File integrity monitoring", "Port scanner", "Load balancer", "Proxy server"], 0, "File integrity monitoring compares files against known-good hashes and flags changes, which catches tampering such as rootkits.", "File integrity monitoring");
+add("secops", "A user signs in once and can then reach email, HR and the ticketing system without signing in again. What is this?", ["SSO", "MFA", "PAM", "RBAC"], 0, "Single sign-on means one authentication grants access to many applications, which also means that one account needs strong protection.", "Single sign-on");
+add("secops", "Which open standard passes authentication assertions in XML between an identity provider and a web application?", ["SAML", "LDAP", "RADIUS", "Kerberos"], 0, "SAML is widely used for federated single sign-on to web apps. LDAP queries directories, and RADIUS handles network access.", "Security Assertion Markup Language");
+add("secops", "A photo-printing website asks for permission to read your cloud photos without ever seeing your password. Which protocol does this?", ["OAuth", "SAML", "TACACS+", "LDAP"], 0, "OAuth is for authorization: it gives an app a limited token for specific access. OpenID Connect adds authentication on top of OAuth.", "OAuth");
+add("secops", "Which combination is true multifactor authentication?", ["A password and a PIN", "A password and a code from an authenticator app", "A fingerprint and a face scan", "A security question and a password"], 1, "MFA needs different factor types: something you know, have or are. The other pairs use two factors of the same type.", "Multi-factor authentication");
+add("secops", "Access is granted by job title, so every nurse automatically gets the nursing application. Which access control model is this?", ["Role-based access control", "Mandatory access control", "Discretionary access control", "Rule-based access control"], 0, "RBAC assigns permissions to roles, then puts people in roles. It scales well and makes access reviews simpler.", "Role-based access control");
+add("secops", "Which access control model uses labels such as Secret and Top Secret, set by administrators rather than by data owners?", ["MAC", "DAC", "RBAC", "ABAC"], 0, "Mandatory access control enforces classification labels and clearances. In discretionary access control, the owner decides who gets access.", "Mandatory access control");
+add("secops", "Administrators get elevated rights only for a set time when they request them, then lose them automatically. What is this?", ["Just-in-time permissions", "Password vaulting only", "Role-based access", "Federation"], 0, "Just-in-time access is a privileged access management (PAM) practice. With no standing admin rights, there is far less for an attacker to steal.", "Just-in-time access");
+add("secops", "What is the correct order of the incident response process?", ["Preparation, detection, analysis, containment, eradication, recovery, lessons learned", "Detection, eradication, containment, preparation, recovery, lessons learned", "Containment, detection, preparation, recovery, eradication, lessons learned", "Preparation, containment, detection, recovery, analysis, eradication"], 0, "You prepare, detect and analyze it, contain it so it stops spreading, remove it, restore normal operations, then review what to improve.", "Incident response process");
+add("secops", "A workstation is confirmed to be infected with ransomware. What should happen first?", ["Pay the ransom", "Wipe every server", "Isolate the workstation from the network", "Notify the press"], 2, "Containment comes before eradication. Cutting the host off stops the ransomware from spreading to file shares and other systems.", "Ransomware containment");
+add("secops", "Which document records everyone who handled a piece of evidence, and when?", ["Chain of custody", "Legal hold", "Root cause analysis", "Service level agreement"], 0, "A gap in the chain of custody can make evidence inadmissible, because no one can prove it was not altered.", "Chain of custody");
+add("secops", "When collecting digital evidence, which should be captured first?", ["The contents of RAM", "A hard drive image", "Backup tapes", "Printed logs"], 0, "Follow the order of volatility: collect what disappears fastest first. RAM is lost at power-off, while disks and backups last.", "Order of volatility");
+add("secops", "Lawyers tell IT to preserve all email related to a lawsuit and suspend normal deletion. What is this?", ["Legal hold", "E-discovery", "Data retention policy", "Chain of custody"], 0, "A legal hold overrides normal retention and deletion schedules for the relevant data until the legal matter is resolved.", "Legal hold");
+add("secops", "Which tool automatically runs response playbooks, such as disabling an account when a specific alert fires?", ["SOAR", "SIEM", "NAC", "IPS"], 0, "Security orchestration, automation and response handles repetitive steps quickly and consistently, which frees analysts for the harder work.", "Security orchestration automation and response");
+
+// 5. Security Program Management and Oversight
+add("prog", "Which type of document gives mandatory step-by-step instructions for a task?", ["Policy", "Procedure", "Guideline", "Standard"], 1, "Policies state what must be achieved and why. Standards set specific mandatory requirements. Procedures give the steps. Guidelines are recommendations.", "Security procedures");
+add("prog", "Which type of document is a recommendation rather than a requirement?", ["Guideline", "Policy", "Standard", "Regulation"], 0, "Guidelines give advice and flexibility. Policies, standards and regulations are mandatory.", "Security guidelines");
+add("prog", "A risk has a single loss expectancy of $20,000 and an annualized rate of occurrence of 0.5. What is the annualized loss expectancy?", ["$10,000", "$20,000", "$40,000", "$5,000"], 0, "ALE = SLE × ARO, so $20,000 × 0.5 = $10,000 a year. An ARO of 0.5 means the event is expected once every two years.", "Annualized loss expectancy");
+add("prog", "An asset is worth $100,000 and the exposure factor is 40%. What is the single loss expectancy?", ["$40,000", "$100,000", "$60,000", "$4,000"], 0, "SLE = asset value × exposure factor, so $100,000 × 0.40 = $40,000 lost each time the event occurs.", "Single loss expectancy");
+add("prog", "A company buys cyber insurance to cover the cost of a data breach. Which risk response is this?", ["Transfer", "Accept", "Avoid", "Mitigate"], 0, "Transference shifts the financial impact to someone else, such as an insurer. The responsibility to protect the data still stays with the company.", "Risk transfer");
+add("prog", "A company cancels a planned product feature because its risk is too high. Which risk response is this?", ["Transfer", "Avoid", "Accept", "Mitigate"], 1, "Avoidance removes the risk by not doing the risky activity at all.", "Risk avoidance");
+add("prog", "Where are identified risks, their owners, likelihood and impact tracked?", ["Risk register", "Change log", "Asset inventory", "Service level agreement"], 0, "A risk register is the central list of risks. Each entry has an owner, a rating and the planned response.", "Risk register");
+add("prog", "The amount of risk an organization is willing to accept in pursuit of its goals is called what?", ["Risk appetite", "Risk register", "Residual risk", "Inherent risk"], 0, "Risk appetite is set by leadership and guides which risks are accepted and which must be reduced.", "Risk appetite");
+add("prog", "The risk that remains after controls have been applied is called what?", ["Residual risk", "Inherent risk", "Risk appetite", "Transferred risk"], 0, "Inherent risk is the risk before any controls. Residual risk is what is left after them. Leadership must accept the residual risk.", "Residual risk");
+add("prog", "The maximum amount of data, measured in time, that an organization can afford to lose is called what?", ["RPO", "RTO", "MTTR", "MTBF"], 0, "The recovery point objective sets how often you must back up. An RPO of 4 hours means backups at least every 4 hours.", "Recovery point objective");
+add("prog", "The target time for getting a system running again after an outage is called what?", ["RTO", "RPO", "MTBF", "SLE"], 0, "The recovery time objective is about downtime. The RPO is about data loss.", "Recovery time objective");
+add("prog", "Which agreement defines the uptime and response times a vendor must deliver?", ["SLA", "NDA", "MOU", "BPA"], 0, "A service level agreement sets measurable performance targets, often with penalties if the vendor misses them.", "Service-level agreement");
+add("prog", "Which document states two organizations' intent to work together, but is usually not legally binding?", ["MOU", "SLA", "MSA", "SOW"], 0, "A memorandum of understanding records shared goals. A master service agreement and a statement of work are binding contracts.", "Memorandum of understanding");
+add("prog", "Which contract clause lets a company inspect a vendor's security practices?", ["Right-to-audit clause", "Non-compete clause", "Indemnity clause", "Force majeure clause"], 0, "A right-to-audit clause is a key tool in third-party risk management: it lets you verify, not just trust, the vendor's claims.", "Right to audit");
+add("prog", "Which regulation gives people in the EU rights over their personal data, including the right to be forgotten?", ["GDPR", "HIPAA", "SOX", "PCI DSS"], 0, "GDPR protects EU residents' personal data wherever the company processing it is based. HIPAA covers US health data, and SOX covers financial reporting.", "General Data Protection Regulation");
+add("prog", "Under privacy rules, which role decides why and how personal data is processed?", ["Data controller", "Data processor", "Data custodian", "Data subject"], 0, "The controller decides the purpose. The processor handles the data on the controller's behalf. The subject is the person the data is about.", "Data controller");
+add("prog", "Penetration testers are given full network diagrams and source code before they begin. What kind of test is this?", ["Known environment", "Unknown environment", "Partially known environment", "Passive reconnaissance"], 0, "A known-environment (white box) test gives full information, so testing is thorough and efficient. An unknown-environment (black box) test simulates an outside attacker.", "White-box testing");
+add("prog", "An independent firm reviews a company's controls and issues a formal report on them. What is this?", ["An external audit", "An internal self-assessment", "A tabletop exercise", "A vulnerability scan"], 0, "External audits give independent attestation, which regulators, customers and partners often require.", "External audit");
+add("prog", "What is the best way to measure whether phishing awareness training is working?", ["Run regular simulated phishing campaigns and track click and report rates", "Count the training slides", "Ask users if they enjoyed it", "Block all email"], 0, "Simulations measure behavior, not attendance. A falling click rate and a rising report rate show the training is working.", "Phishing simulation");
+add("prog", "The person who approves vendor payments should not also be able to create new vendors. Which principle is this?", ["Separation of duties", "Least privilege", "Job rotation", "Mandatory vacation"], 0, "Separation of duties means fraud needs two people working together. In banking this is the dual control behind large wires.", "Separation of duties");
+
 /* ---------- 3. FLASHCARDS ----------
    Each line is: [deck, front of card, back of card] */
 const CARDS = [
@@ -397,20 +528,90 @@ const CARDS = [
   ["Commands", "ls", "Linux: list files in a directory."],
   ["Commands", "chmod", "Linux: change file permissions."],
   ["Commands", "sudo", "Linux: run one command with administrator rights."],
-  ["Commands", "grep", "Linux: search for text inside files or output."]
+  ["Commands", "grep", "Linux: search for text inside files or output."],
+
+  // Security+
+  ["Security acronyms", "CIA", "Confidentiality, integrity, availability. The three goals of information security."],
+  ["Security acronyms", "AAA", "Authentication, authorization, accounting. Who you are, what you may do, what you did."],
+  ["Security acronyms", "PKI", "Public key infrastructure. The CAs, certificates and processes that make public keys trustworthy."],
+  ["Security acronyms", "OCSP", "Online Certificate Status Protocol. Checks one certificate's revocation status in real time."],
+  ["Security acronyms", "CRL", "Certificate revocation list. A CA's published list of revoked certificates."],
+  ["Security acronyms", "HSM", "Hardware security module. A dedicated device that stores keys for many systems."],
+  ["Security acronyms", "SIEM", "Security information and event management. Collects and correlates logs, raises alerts."],
+  ["Security acronyms", "SOAR", "Security orchestration, automation and response. Runs response playbooks automatically."],
+  ["Security acronyms", "EDR", "Endpoint detection and response. Watches behavior on hosts and can isolate them."],
+  ["Security acronyms", "DLP", "Data loss prevention. Stops sensitive data from leaving."],
+  ["Security acronyms", "CASB", "Cloud access security broker. Visibility and policy control over cloud app use."],
+  ["Security acronyms", "SASE", "Secure access service edge. Networking and security delivered together from the cloud."],
+  ["Security acronyms", "NAC", "Network access control. Checks a device before letting it on the network (often 802.1X)."],
+  ["Security acronyms", "PAM", "Privileged access management. Controls and records admin accounts, often just-in-time."],
+  ["Security acronyms", "SAML", "Security Assertion Markup Language. XML-based federated single sign-on."],
+  ["Security acronyms", "RBAC / ABAC", "Role-based / attribute-based access control. Access by job role, or by attributes like location and time."],
+  ["Security acronyms", "MAC / DAC", "Mandatory / discretionary access control. Labels set by admins, or access set by the owner."],
+  ["Security acronyms", "IoC", "Indicator of compromise. Evidence an attack happened, such as impossible travel or unknown hashes."],
+  ["Security acronyms", "SPF / DKIM / DMARC", "Approved senders list / message signature / policy and reporting for mail that fails the first two."],
+  ["Security acronyms", "WAF", "Web application firewall. Blocks attacks like SQL injection and XSS at layer 7."],
+  ["Security acronyms", "IaC", "Infrastructure as code. Servers and networks defined in configuration files."],
+  ["Security acronyms", "RTO / RPO", "Recovery time objective (how long down) / recovery point objective (how much data lost)."],
+  ["Security acronyms", "MTTR / MTBF", "Mean time to repair / mean time between failures."],
+  ["Security acronyms", "SLA / MOU / NDA", "Service level agreement / memorandum of understanding / non-disclosure agreement."],
+  ["Attacks", "Phishing / smishing / vishing", "Fake messages by email / SMS text / voice call."],
+  ["Attacks", "Whaling", "Phishing aimed at senior executives."],
+  ["Attacks", "Business email compromise", "Impersonating an executive or vendor by email, usually to redirect payments."],
+  ["Attacks", "Watering hole", "Infecting a site the targets already visit."],
+  ["Attacks", "Typosquatting", "Registering a misspelled domain, like examp1e.com, to catch typing mistakes."],
+  ["Attacks", "Password spraying", "A few common passwords tried against many accounts, to avoid lockouts."],
+  ["Attacks", "Credential stuffing", "Username and password pairs leaked from one site, tried on other sites."],
+  ["Attacks", "On-path", "Intercepting and relaying traffic between two parties. Formerly man-in-the-middle."],
+  ["Attacks", "Replay", "Capturing valid traffic, such as a login token, and sending it again later."],
+  ["Attacks", "SQL injection", "Input that changes a database query. Fix: parameterized queries."],
+  ["Attacks", "Cross-site scripting (XSS)", "Script injected into a page that runs in other users' browsers."],
+  ["Attacks", "CSRF", "Cross-site request forgery. Tricks a logged-in browser into sending an unwanted request."],
+  ["Attacks", "Directory traversal", "Using ../ in a path to reach files outside the web folder."],
+  ["Attacks", "Pass-the-hash", "Authenticating with a stolen password hash instead of the password."],
+  ["Attacks", "Evil twin", "A rogue Wi-Fi access point copying a legitimate network's name."],
+  ["Attacks", "DNS poisoning", "Corrupting DNS answers to send users to a malicious IP address."],
+  ["Secure ports", "22", "SSH, SFTP and SCP: encrypted remote access and file transfer"],
+  ["Secure ports", "49", "TACACS+: device administration AAA (Cisco)"],
+  ["Secure ports", "88", "Kerberos: Windows domain authentication"],
+  ["Secure ports", "443", "HTTPS: web traffic over TLS"],
+  ["Secure ports", "500", "IKE: key exchange for IPsec VPNs"],
+  ["Secure ports", "587 / 465", "SMTP submission with STARTTLS / SMTPS"],
+  ["Secure ports", "636", "LDAPS: LDAP over TLS"],
+  ["Secure ports", "989 / 990", "FTPS: FTP over TLS"],
+  ["Secure ports", "993", "IMAPS: IMAP over TLS"],
+  ["Secure ports", "995", "POP3S: POP3 over TLS"],
+  ["Secure ports", "1812 / 1813", "RADIUS: authentication / accounting"],
+  ["Secure ports", "5061", "SIP over TLS: secure VoIP call setup"],
+  ["Risk math", "SLE", "Single loss expectancy = asset value × exposure factor"],
+  ["Risk math", "ALE", "Annualized loss expectancy = SLE × ARO"],
+  ["Risk math", "ARO", "Annualized rate of occurrence. Once every 4 years = 0.25"],
+  ["Risk math", "EF", "Exposure factor. The share of the asset's value lost in one event, as a percentage."],
+  ["Risk math", "Risk responses", "Accept, avoid, transfer (e.g. insurance), mitigate (add controls)."],
+  ["Risk math", "Inherent vs residual risk", "Risk before controls vs risk left after controls."]
 ];
 
 /* ---------- 4. STUDY LINKS (checked October 2026) ---------- */
 const RESOURCES = [
-  { group: "Official exam information", items: [
+  { track: "secplus", group: "Official exam information", items: [
+    ["CompTIA Security+ (SY0-701)", "https://www.comptia.org/en/certifications/security/v7/", "Exam details and the downloadable objectives. Check the SY0-701 retirement date here before booking."]
+  ]},
+  { track: "secplus", group: "Free video course", items: [
+    ["Professor Messer: SY0-701 Security+ course", "https://www.professormesser.com/security-plus/sy0-701/sy0-701-video/sy0-701-comptia-security-plus-course/", "Free videos that follow the SY0-701 objectives in order."],
+    ["Professor Messer: SY0-701 study resources", "https://www.professormesser.com/sy0-701-secplus-resources/", "Course notes, practice exams and the monthly study group."]
+  ]},
+  { track: "secplus", group: "Reference", items: [
+    ["NIST glossary", "https://csrc.nist.gov/glossary", "Official definitions for security terms and acronyms."]
+  ]},
+  { track: "aplus", group: "Official exam information", items: [
     ["CompTIA A+ Core 1 (220-1201)", "https://www.comptia.org/en-us/certifications/a/core-1-v15/", "Exam details and the downloadable objectives. The objectives list is the definitive checklist of what can be asked."],
     ["CompTIA A+ Core 2 (220-1202)", "https://www.comptia.org/en-us/certifications/a/core-2-v15/", "The same for the second exam."]
   ]},
-  { group: "Free video courses", items: [
+  { track: "aplus", group: "Free video courses", items: [
     ["Professor Messer: Core 1 course", "https://www.professormesser.com/free-a-plus-training/220-1201/220-1201-video/220-1201-training-course/", "Free videos that follow the Core 1 objectives in order."],
     ["Professor Messer: Core 2 course", "https://www.professormesser.com/free-a-plus-training/220-1202/220-1202-video/220-1202-training-course/", "Free videos that follow the Core 2 objectives in order."]
   ]},
-  { group: "Reference", items: [
+  { track: "aplus", group: "Reference", items: [
     ["Microsoft Learn: Windows commands", "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/windows-commands", "Every Windows command-line tool, with syntax and examples."],
     ["Linux man pages online", "https://man7.org/linux/man-pages/", "The manual page for each Linux command."]
   ]}
@@ -437,7 +638,7 @@ function today() {
 // Saved state. It is always kept in this browser. On the published page it is also saved to your
 // Claude account (see "Saving to your Claude account" below), so it follows you between devices.
 const STORE_KEY = "aplus-study-progress";
-let state = { v: 2, cards: {}, streak: 0, lastDay: null, newDay: null, newToday: 0, recallFirst: false, updated: 0, resetAt: 0 };
+let state = { v: 2, track: "secplus", cards: {}, streak: 0, lastDay: null, newDay: null, newToday: 0, recallFirst: false, updated: 0, resetAt: 0 };
 try {
   const raw = JSON.parse(localStorage.getItem(STORE_KEY));
   if (raw && raw.v === 2) {
@@ -692,6 +893,18 @@ function shuffle(list) {
 }
 const domainById = id => DOMAINS.find(d => d.id === id);
 const inCore = core => QUESTIONS.filter(q => domainById(q.domain).core === core);
+// The track being studied (Security+ or A+), and only that track's questions.
+const trackId = () => TRACKS[state.track] ? state.track : "secplus";
+const track = () => TRACKS[trackId()];
+const examsNow = () => EXAMS.filter(e => e.track === trackId());
+const studyQs = () => QUESTIONS.filter(q => examsNow().some(e => e.core === domainById(q.domain).core));
+function switchTrack(id) {
+  if (id === trackId()) return;
+  state.track = id;
+  deckName = null;             // rebuild the flashcard deck for the new track
+  save();
+  showHome();
+}
 const link = (text, href) => el("a", { href, target: "_blank", rel: "noopener" }, text);
 
 // Two links for digging deeper into a question's topic. Both open a search, so they always work.
@@ -700,13 +913,13 @@ function learnMore(topic) {
     el("span", { class: "label" }, "Learn more: " + topic),
     el("div", { class: "row" },
       link("Read about it on Wikipedia", "https://en.wikipedia.org/w/index.php?search=" + encodeURIComponent(topic)),
-      link("Find a video on YouTube", "https://www.youtube.com/results?search_query=" + encodeURIComponent("CompTIA A+ " + topic))));
+      link("Find a video on YouTube", "https://www.youtube.com/results?search_query=" + encodeURIComponent(track().search + " " + topic))));
 }
 
 // Today's session: everything that is due, then a few new questions.
 function todaysSession() {
-  const due = shuffle(QUESTIONS.filter(isDue));
-  const fresh = shuffle(QUESTIONS.filter(isNew)).slice(0, newLeftToday());
+  const due = shuffle(studyQs().filter(isDue));
+  const fresh = shuffle(studyQs().filter(isNew)).slice(0, newLeftToday());
   return { due, fresh, list: due.concat(fresh) };
 }
 
@@ -725,17 +938,18 @@ function showHome() {
   onKey = null;
   atHome = true;
   const session = todaysSession();
-  const learned = QUESTIONS.filter(isLearned).length;
+  const pool = studyQs();
+  const learned = pool.filter(isLearned).length;
   const streak = streakNow();
-  const freshLeft = QUESTIONS.filter(isNew).length;
+  const freshLeft = pool.filter(isNew).length;
 
   // Work out when the next review falls due, for the "all caught up" message.
-  const upcoming = QUESTIONS.filter(q => cardOf(q) && cardOf(q).due > today()).map(q => cardOf(q).due);
+  const upcoming = pool.filter(q => cardOf(q) && cardOf(q).due > today()).map(q => cardOf(q).due);
   const nextDue = upcoming.length ? Math.min(...upcoming) : null;
 
   const summary = el("div", { class: "panel summary" },
     el("div", null, el("b", null, String(session.due.length)), el("span", { class: "sub" }, "due for review")),
-    el("div", null, el("b", null, learned + "/" + QUESTIONS.length), el("span", { class: "sub" }, "learned")),
+    el("div", null, el("b", null, learned + "/" + pool.length), el("span", { class: "sub" }, "learned")),
     el("div", null, el("b", null, String(streak)), el("span", { class: "sub" }, streak === 1 ? "day in a row" : "days in a row"))
   );
 
@@ -753,7 +967,7 @@ function showHome() {
         ? "Your next review is " + inDays(nextDue - today()) + ", with " + upcoming.filter(d => d === nextDue).length + " questions. Coming back then is what moves them into long-term memory."
         : "Nothing is scheduled yet."),
       freshLeft > 0 && el("div", { class: "row" },
-        el("button", { class: "btn", onclick: () => startQuiz(shuffle(QUESTIONS.filter(isNew)).slice(0, NEW_PER_DAY), "Extra new questions") }, "Learn " + Math.min(NEW_PER_DAY, freshLeft) + " more new questions")));
+        el("button", { class: "btn", onclick: () => startQuiz(shuffle(pool.filter(isNew)).slice(0, NEW_PER_DAY), "Extra new questions") }, "Learn " + Math.min(NEW_PER_DAY, freshLeft) + " more new questions")));
   }
 
   const options = el("div", { class: "row" },
@@ -767,7 +981,7 @@ function showHome() {
     el("span", null, "Hide the choices until I have thought of an answer ",
       el("span", { class: "sub" }, "(harder, and better for memory)")));
 
-  const exams = EXAMS.map(exam => {
+  const exams = examsNow().map(exam => {
     const list = inCore(exam.core);
     return el("section", { class: "panel" },
       el("div", { class: "exam-head" },
@@ -791,7 +1005,7 @@ function showHome() {
 
   const reset = confirmingReset
     ? el("div", { class: "row" },
-        el("span", { class: "sub" }, "Erase all saved progress?"),
+        el("span", { class: "sub" }, "Erase all saved progress, for both A+ and Security+?"),
         el("button", { class: "btn small", onclick: () => {
           state.cards = {}; state.streak = 0; state.lastDay = null; state.newDay = null; state.newToday = 0;
           state.resetAt = Date.now();
@@ -799,11 +1013,20 @@ function showHome() {
         el("button", { class: "btn small", onclick: () => { confirmingReset = false; showHome(); } }, "Cancel"))
     : el("button", { class: "link", onclick: () => { confirmingReset = true; showHome(); } }, "Reset progress");
 
+  const nDomains = DOMAINS.filter(d => examsNow().some(e => e.core === d.core)).length;
+  const switcher = el("div", { class: "row", role: "group", "aria-label": "Exam to study" },
+    el("span", { class: "label" }, "Studying"),
+    Object.keys(TRACKS).map(id => el("button", {
+      class: "chip" + (id === trackId() ? " on" : ""), "aria-pressed": String(id === trackId()),
+      onclick: () => switchTrack(id) }, TRACKS[id].label)));
+  document.title = track().title;
+
   show(
+    switcher,
     el("header", { class: "stack" },
-      el("p", { class: "label" }, "CompTIA A+ · V15"),
-      el("h1", null, "A+ Study Guide"),
-      el("p", { class: "sub" }, QUESTIONS.length + " practice questions across all nine exam domains. Do the daily session and the app brings each question back just before you would forget it.")),
+      el("p", { class: "label" }, track().tag),
+      el("h1", null, track().title),
+      el("p", { class: "sub" }, pool.length + " practice questions across all " + nDomains + " exam domains. Do the daily session and the app brings each question back just before you would forget it.")),
     summary, todayPanel, options, recall, accountPanel(), ...exams,
     el("p", { class: "note" }, "These are original practice questions written for study, not questions from the real exam."),
     (saveNote = el("p", { class: "note" }, saveMessage())),
@@ -931,7 +1154,7 @@ function showResources() {
       el("button", { class: "link", onclick: showHome }, "Back to home")),
     el("h1", null, "Where to learn the material"),
     el("p", { class: "sub" }, "This app is for remembering. Use these to learn a topic properly the first time, then let the daily session keep it in your head."),
-    RESOURCES.map(group => el("section", { class: "panel" },
+    RESOURCES.filter(g => g.track === trackId()).map(group => el("section", { class: "panel" },
       el("h2", null, group.group),
       group.items.map(item => el("div", { class: "missed stack" },
         link(item[0], item[1]),
@@ -968,7 +1191,7 @@ function showCards(name, at) {
   atHome = false;
   if (name !== deckName) {   // a different deck was chosen, so build and shuffle it
     deckName = name;
-    deckOrder = shuffle(CARDS.filter(c => name === "All" || c[0] === name));
+    deckOrder = shuffle(CARDS.filter(c => name === "All" ? track().decks.includes(c[0]) : c[0] === name));
     at = 0;
     flipped = false;
   }
@@ -986,7 +1209,7 @@ function showCards(name, at) {
     el("div", { class: "row spread" },
       el("p", { class: "label" }, "Flashcards · " + (at + 1) + " of " + deckOrder.length),
       el("button", { class: "link", onclick: showHome }, "Back to home")),
-    el("div", { class: "row" }, ["All", "Ports", "Acronyms", "Commands"].map(n =>
+    el("div", { class: "row" }, ["All"].concat(track().decks).map(n =>
       el("button", { class: "chip" + (n === name ? " on" : ""), onclick: () => showCards(n, 0) }, n))),
     el("button", { class: "card" + (flipped ? " back" : ""), onclick: flip },
       el("span", { class: "label" }, flipped ? "Answer" : card[0]),
